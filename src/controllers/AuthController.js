@@ -7,11 +7,17 @@ const login = async (req, res, next) => {
     try {
         const user = await AuthModel.loginUser(email);
         if (!user) {
-            return res.status(401).json({ message: 'Invalid email or password' });
+            return res.status(401).json({ 
+                success: false,
+                message: 'Invalid email or password' 
+            });
         }
         const isPasswordValid = await bcrypt.compare(password, user.password);
         if (!isPasswordValid) {
-            return res.status(401).json({ message: 'Invalid email or password' });
+            return res.status(401).json({ 
+                success: false,
+                message: 'Invalid email or password' 
+            });
         }
 
         const { jwtToken } = await generateJwtToken(user);

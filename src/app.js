@@ -6,7 +6,7 @@ const app = express();
 
 const corsOptions = {
   origin: [
-    'https://musaraf.org.in/',
+    'https://musaraf.org.in',
     'http://localhost:3000'
   ],
   credentials: true,

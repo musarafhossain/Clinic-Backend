@@ -46,14 +46,22 @@ const createUser = async (req, res, next) => {
 
 const getAllUsers = async (req, res, next) => {
     try {
-        const { users, total, page, limit } = await UserModel.getAllUsers();
+        const page = Number(req.query.page) || 1;
+        const limit = Number(req.query.limit) || 10;
+        const search = req.query.search || "";
+
+        const { items, total, currentPage, lastPage } = 
+            await UserModel.getAllUsers(page, limit, search);
+
         res.status(200).json({
             success: true,
-            data: users,
-            page: page,
-            limit: limit,
-            total: total,
-            message: 'Users retrieved successfully'
+            message: 'Users retrieved successfully',
+            data: {
+                items,
+                total,
+                currentPage,
+                lastPage,
+            }
         });
     } catch (error) {
         next(error);

@@ -9,24 +9,39 @@ const createUser = async (userData) => {
     return { id: result.insertId, ...userData };
 }
 
-const getAllUsers = async (page = 1, limit = 10) => {
+const getAllUsers = async (page = 1, limit = 10, search = "") => {
     const offset = (page - 1) * limit;
+    const searchPattern = `%${search}%`;
+
     const [rows] = await db.execute(
-        'SELECT id, name, email, phone, created_at, updated_at FROM users LIMIT ? OFFSET ?',
-        [limit, offset]
+        `
+        SELECT id, name, email, phone, created_at, updated_at 
+        FROM users
+        WHERE name LIKE ? OR email LIKE ?
+        ORDER BY id DESC
+        LIMIT ? OFFSET ?
+        `,
+        [searchPattern, searchPattern, limit, offset]
     );
+
     const [[{ total }]] = await db.execute(
-        'SELECT COUNT(*) as total FROM users'
+        `
+        SELECT COUNT(*) as total 
+        FROM users 
+        WHERE name LIKE ? OR email LIKE ?
+        `,
+        [searchPattern, searchPattern]
     );
 
     return {
-        users: rows,
-        page,
+        items: rows,
+        currentPage: page,
         limit,
         total,
-        totalPages: Math.ceil(total / limit),
+        lastPage: Math.ceil(total / limit),
     };
 };
+
 
 const getUserById = async (userId) => {
     const [rows] = await db.execute('SELECT * FROM users WHERE id = ? LIMIT 1', [userId]);

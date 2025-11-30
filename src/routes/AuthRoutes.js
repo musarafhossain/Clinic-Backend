@@ -1,5 +1,5 @@
 import express from 'express';
-import { AuthController } from '../controllers/index.js';
+import AuthController from '../controllers/AuthController.js';
 import verifyJwtToken from '../middlewares/verifyJwtToken.js';
 import passport from 'passport';
 

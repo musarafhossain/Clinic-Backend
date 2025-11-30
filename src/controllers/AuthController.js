@@ -1,4 +1,4 @@
-import { AuthModel } from '../models/index.js';
+import AuthModel from '../models/AuthModel.js';
 import bcrypt from 'bcrypt';
 import generateJwtToken from '../utils/generateJwtToken.js';
 

@@ -1,4 +1,4 @@
-import { UserModel } from '../models/index.js';
+import UserModel from '../models/UserModel.js';
 import bcrypt from 'bcrypt';
 
 const createUser = async (req, res, next) => {

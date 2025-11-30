@@ -1,6 +1,6 @@
 import express from 'express';
 import cors from 'cors';
-import { UserRoutes, AuthRoutes } from './routes/index.js';
+import { UserRoutes, AuthRoutes, DiseaseRoutes } from './routes/index.js';
 import verifyJwtToken from './middlewares/verifyJwtToken.js';
 import passport from 'passport';
 import './config/passport-jwt-strategy.js';
@@ -21,6 +21,7 @@ app.use(passport.initialize());
 app.use(express.json());
 app.use('/api/auth', AuthRoutes);
 app.use('/api/users', verifyJwtToken, passport.authenticate('jwt', { session: false }), UserRoutes);
+app.use('/api/diseases', verifyJwtToken, passport.authenticate('jwt', { session: false }), DiseaseRoutes);
 app.all('/', (req, res) => {
   res.json({ message: 'Server is running' });
 });

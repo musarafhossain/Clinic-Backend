@@ -7,16 +7,16 @@ const login = async (req, res, next) => {
     try {
         const user = await AuthModel.loginUser(email);
         if (!user) {
-            return res.status(401).json({ 
+            return res.status(401).json({
                 success: false,
-                message: 'Invalid email or password' 
+                message: 'Invalid email or password'
             });
         }
         const isPasswordValid = await bcrypt.compare(password, user.password);
         if (!isPasswordValid) {
-            return res.status(401).json({ 
+            return res.status(401).json({
                 success: false,
-                message: 'Invalid email or password' 
+                message: 'Invalid email or password'
             });
         }
 
@@ -37,6 +37,18 @@ const login = async (req, res, next) => {
     }
 };
 
-export default{
+const me = async (req, res) => {
+    const user = req.user;
+
+    if (user.password) delete user.password;
+
+    res.status(200).json({
+        success: true,
+        user,
+    });
+};
+
+export default {
     login,
+    me,
 }

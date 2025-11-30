@@ -24,6 +24,14 @@ const getUserJwtTokenByUserId = async (userId) => {
     return rows[0];
 }
 
+const getUserJwtTokenByToken = async (token) => {
+    const [rows] = await db.execute(
+        'SELECT * FROM user_jwt_tokens WHERE token = ?',
+        [token]
+    );
+    return rows[0];
+}
+
 const deleteUserJwtTokenByUserId = async (userId) => {
     await db.execute(
         'DELETE FROM user_jwt_tokens WHERE user_id = ?',
@@ -36,5 +44,6 @@ export default {
     createUserJwtToken,
     updateUserJwtToken,
     getUserJwtTokenByUserId,
+    getUserJwtTokenByToken,
     deleteUserJwtTokenByUserId,
 };

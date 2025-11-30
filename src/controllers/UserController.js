@@ -49,9 +49,10 @@ const getAllUsers = async (req, res, next) => {
         const page = Number(req.query.page) || 1;
         const limit = Number(req.query.limit) || 10;
         const search = req.query.search || "";
+        const currentUserId = req.user?.id;
 
         const { items, total, currentPage, lastPage } = 
-            await UserModel.getAllUsers(page, limit, search);
+            await UserModel.getAllUsers(page, limit, search, currentUserId);
 
         res.status(200).json({
             success: true,

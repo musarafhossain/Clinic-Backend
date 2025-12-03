@@ -40,7 +40,7 @@ const createDisease = async (req, res, next) => {
 const getAllDiseases = async (req, res, next) => {
     try {
         const page = Number(req.query.page) || 1;
-        const limit = Number(req.query.limit) || 10;
+        const limit = Number(req.query.limit) || null;
         const search = req.query.search || "";
 
         const { items, total, currentPage, lastPage } =

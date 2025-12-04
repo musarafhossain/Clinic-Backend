@@ -91,7 +91,6 @@ const getAllDiseases = async (page = 1, limit, search = "") => {
     };
 };
 
-
 const getDiseaseById = async (diseaseId) => {
     const [rows] = await db.execute(
         `

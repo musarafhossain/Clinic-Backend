@@ -1,68 +1,5 @@
 import db from '../config/db.js';
 
-const bulkMarkAttendance = async ({ date, added_by, records }) => {
-    const connection = await db.getConnection();
-
-    try {
-        await connection.beginTransaction();
-        const presentRecords = records.filter(r => r.is_present);
-
-
-        if (presentRecords.length > 0) {
-            const values = presentRecords.map(r => [
-                r.patient_id,
-                r.disease || null,
-                r.amount || null,
-                added_by,
-                date
-            ]);
-
-            await connection.query(
-                `
-                INSERT INTO attendances
-                    (patient_id, disease_name, disease_amount, added_by, datetime)
-                VALUES ?
-                ON DUPLICATE KEY UPDATE
-                    datetime = VALUES(datetime),
-                    disease_name = VALUES(disease_name),
-                    disease_amount = VALUES(disease_amount)
-                `,
-                [values]
-            );
-        }
-
-        const absentPatients = records
-            .filter(r => !r.is_present)
-            .map(r => r.patient_id);
-
-        if (absentPatients.length > 0) {
-            await connection.query(
-                `
-                DELETE FROM attendances
-                WHERE DATE(datetime) = ?
-                  AND patient_id IN (?)
-                `,
-                [date, absentPatients]
-            );
-        }
-
-        await connection.commit();
-        connection.release();
-
-        return {
-            success: true,
-            message: "Bulk attendance updated",
-            present: presentRecords.length,
-            absent: absentPatients.length
-        };
-
-    } catch (error) {
-        await connection.rollback();
-        connection.release();
-        throw error;
-    }
-};
-
 const toggleAttendance = async ({
     patient_id,
     disease_name,
@@ -151,29 +88,7 @@ const toggleAttendance = async ({
     }
 };
 
-const getAttendanceByDate = async (date) => {
-    const [rows] = await db.execute(
-        `
-        SELECT 
-            p.id AS patient_id,
-            p.name AS patient_name,
-            IF(pa.patient_id IS NULL, 0, 1) AS attendedToday,
-            pa.disease_name,
-            pa.disease_amount,
-            pa.added_by,
-            pa.datetime
-        FROM patients p
-        LEFT JOIN patient_attendance pa 
-            ON p.id = pa.patient_id AND DATE(pa.datetime) = ?
-        ORDER BY p.id ASC
-        `,
-        [date]
-    );
-
-    return rows;
-};
-
-const getAttendanceByPatientId = async (page = 1, limit = 10, search = "", patientId) => {
+const getAttendanceHistoryByPatientId = async (page = 1, limit = 10, search = "", patientId) => {
     const offset = (page - 1) * limit;
     const searchPattern = `%${search}%`;
 
@@ -224,7 +139,7 @@ const getAttendanceByPatientId = async (page = 1, limit = 10, search = "", patie
     };
 };
 
-const getAllPatients = async (
+const getAllPatientsWithAttendance = async (
     page = 1,
     limit = 10,
     search = "",
@@ -349,8 +264,6 @@ const getAllPatients = async (
 
 export default {
     toggleAttendance,
-    getAttendanceByDate,
-    getAllPatients,
-    bulkMarkAttendance,
-    getAttendanceByPatientId,
+    getAllPatientsWithAttendance,
+    getAttendanceHistoryByPatientId,
 };

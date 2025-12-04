@@ -32,63 +32,6 @@ const markSingleAttendance = async (req, res, next) => {
     }
 };
 
-
-const bulkMarkAttendance = async (req, res, next) => {
-    try {
-        const { date, records } = req.body;
-        const added_by = req.user?.id ?? null;
-
-        if (!date) {
-            return res.status(400).json({ success: false, message: "date is required" });
-        }
-
-        if (!Array.isArray(records) || records.length === 0) {
-            return res.status(400).json({ success: false, message: "records array required" });
-        }
-
-        const result = await AttendanceModel.bulkMarkAttendance({
-            date,
-            added_by,
-            records
-        });
-
-        return res.status(200).json({
-            success: true,
-            message: result.message,
-            data: result
-        });
-
-    } catch (error) {
-        next(error);
-    }
-};
-
-
-const getAttendanceByDate = async (req, res, next) => {
-    try {
-        const { date } = req.query;
-
-        if (!date) {
-            return res.status(400).json({
-                success: false,
-                message: "date is required"
-            });
-        }
-
-        const rows = await AttendanceModel.getAttendanceByDate(date);
-
-        return res.status(200).json({
-            success: true,
-            message: 'Attendance fetched successfully',
-            data: rows
-        });
-
-    } catch (error) {
-        next(error);
-    }
-};
-
-
 const getPatientsWithAttendance = async (req, res, next) => {
     try {
         const page = Number(req.query.page) || 1;
@@ -102,11 +45,11 @@ const getPatientsWithAttendance = async (req, res, next) => {
             total,
             currentPage,
             lastPage
-        } = await AttendanceModel.getAllPatients(page, limit, search, status, date);
+        } = await AttendanceModel.getAllPatientsWithAttendance(page, limit, search, status, date);
 
         return res.status(200).json({
             success: true,
-            message: "Patients attendance retrieved successfully",
+            message: "Patients with attendance retrieved successfully",
             data: {
                 items,
                 total,
@@ -120,7 +63,7 @@ const getPatientsWithAttendance = async (req, res, next) => {
     }
 };
 
-const getAttendanceByPatientId = async (req, res, next) => {
+const getAttendanceHistoryByPatientId = async (req, res, next) => {
     try {
         const page = Number(req.query.page) || 1;
         const limit = Number(req.query.limit) || 10;
@@ -134,11 +77,11 @@ const getAttendanceByPatientId = async (req, res, next) => {
             total,
             currentPage,
             lastPage
-        } = await AttendanceModel.getAttendanceByPatientId(page, limit, search, patientId);
+        } = await AttendanceModel.getAttendanceHistoryByPatientId(page, limit, search, patientId);
 
         return res.status(200).json({
             success: true,
-            message: "Patient attendances retrieved successfully",
+            message: "Patient attendance history retrieved successfully",
             data: {
                 items,
                 total,
@@ -154,8 +97,6 @@ const getAttendanceByPatientId = async (req, res, next) => {
 
 export default {
     markSingleAttendance,
-    bulkMarkAttendance,
-    getAttendanceByDate,
     getPatientsWithAttendance,
-    getAttendanceByPatientId
+    getAttendanceHistoryByPatientId
 };

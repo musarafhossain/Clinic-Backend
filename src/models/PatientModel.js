@@ -178,6 +178,11 @@ const updatePatientById = async (patientId, patientData) => {
     return await getPatientById(patientId) ?? null;
 };
 
+const deletePatientById = async (patientId) => {
+    await db.execute('DELETE FROM patients WHERE id = ?', [patientId]);
+    return true;
+};
+
 const addPatientPayment = async (patientId, patientData) => {
     const { amount, note, createdBy } = patientData;
     const connection = await db.getConnection();
@@ -289,11 +294,6 @@ const deletePatientHistoryById = async (transactionId) => {
     }
 };
 
-const deletePatientById = async (patientId) => {
-    await db.execute('DELETE FROM patients WHERE id = ?', [patientId]);
-    return true;
-};
-
 const getPaymentHistoryByPatientId = async (page = 1, limit = 10, search = "", patientId) => {
     const offset = (page - 1) * limit;
     const searchPattern = `%${search}%`;
@@ -344,7 +344,6 @@ const getPaymentHistoryByPatientId = async (page = 1, limit = 10, search = "", p
         lastPage: Math.ceil(total / limit),
     };
 };
-
 
 export default {
     createPatient,

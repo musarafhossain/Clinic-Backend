@@ -173,6 +173,57 @@ const getAttendanceByDate = async (date) => {
     return rows;
 };
 
+const getAttendanceByPatientId = async (page = 1, limit = 10, search = "", patientId) => {
+    const offset = (page - 1) * limit;
+    const searchPattern = `%${search}%`;
+
+    const params = [searchPattern, searchPattern];
+    let whereClause = `(datetime LIKE ? OR disease_name LIKE ?)`;
+
+    if (patientId) {
+        whereClause += ` AND patient_id = ?`;
+        params.push(patientId);
+    }
+
+    params.push(limit, offset);
+
+    const [rows] = await db.execute(
+        `
+        SELECT *
+        FROM attendances
+        WHERE ${whereClause}
+        ORDER BY id DESC
+        LIMIT ? OFFSET ?
+        `,
+        params
+    );
+
+    const countParams = [searchPattern, searchPattern];
+    let countWhere = `(datetime LIKE ? OR disease_name LIKE ?)`;
+
+    if (patientId) {
+        countWhere += ` AND patient_id = ?`;
+        countParams.push(patientId);
+    }
+
+    const [[{ total }]] = await db.execute(
+        `
+        SELECT COUNT(*) as total 
+        FROM attendances 
+        WHERE ${countWhere}
+        `,
+        countParams
+    );
+
+    return {
+        items: rows,
+        currentPage: page,
+        limit,
+        total,
+        lastPage: Math.ceil(total / limit),
+    };
+};
+
 const getAllPatients = async (
     page = 1,
     limit = 10,
@@ -301,4 +352,5 @@ export default {
     getAttendanceByDate,
     getAllPatients,
     bulkMarkAttendance,
+    getAttendanceByPatientId,
 };

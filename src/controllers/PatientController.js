@@ -168,10 +168,97 @@ const deletePatientById = async (req, res, next) => {
     }
 };
 
+const addPatientPayment = async (req, res, next) => {
+    try {
+        const patientId = req.params.id;
+        const patient = await PatientModel.getPatientById(patientId);
+        if (!patient) {
+            return res.status(404).json({
+                success: false,
+                message: 'Patient not found'
+            });
+        }
+
+        const txnData = {
+            amount: req.body.amount ?? null,
+            note: req.body.note ?? null,
+            createdBy: req.user?.id ?? null,
+        };
+
+         if (!txnData.amount) {
+            return res.status(400).json({
+                success: false,
+                message: "Missing required fields: amount"
+            });
+        }
+
+        const data = await PatientModel.addPatientPayment(patientId, txnData);
+
+        res.status(200).json({
+            success: true,
+            message: 'Payment added successfully',
+            data: data
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+const deletePaymentHistoryById = async (req, res, next) => {
+    try {
+        const id = req.params.id;
+
+        const data = await PatientModel.deletePatientHistoryById(id);
+
+        res.status(200).json({
+            success: true,
+            message: 'Payment history deleted successfully',
+            data: data
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+const getPaymentHistoryByPatientId = async (req, res, next) => {
+    try {
+        const page = Number(req.query.page) || 1;
+        const limit = Number(req.query.limit) || 10;
+        const search = req.query.search
+            ? decodeURIComponent(req.query.search)
+            : "";
+        const patientId = req.query.patientId || "";
+
+        const {
+            items,
+            total,
+            currentPage,
+            lastPage
+        } = await PatientModel.getPaymentHistoryByPatientId(page, limit, search, patientId);
+
+        return res.status(200).json({
+            success: true,
+            message: "Payment history retrieved successfully",
+            data: {
+                items,
+                total,
+                currentPage,
+                lastPage,
+            }
+        });
+
+    } catch (error) {
+        next(error);
+    }
+};
+
 export default {
     createPatient,
     getAllPatients,
     getPatientById,
     updatePatientById,
     deletePatientById,
+    addPatientPayment,
+    getPaymentHistoryByPatientId,
+    deletePaymentHistoryById,
 };

@@ -120,10 +120,42 @@ const getPatientsWithAttendance = async (req, res, next) => {
     }
 };
 
+const getAttendanceByPatientId = async (req, res, next) => {
+    try {
+        const page = Number(req.query.page) || 1;
+        const limit = Number(req.query.limit) || 10;
+        const search = req.query.search
+            ? decodeURIComponent(req.query.search)
+            : "";
+        const patientId = req.query.patientId || "";
+
+        const {
+            items,
+            total,
+            currentPage,
+            lastPage
+        } = await AttendanceModel.getAttendanceByPatientId(page, limit, search, patientId);
+
+        return res.status(200).json({
+            success: true,
+            message: "Patient attendances retrieved successfully",
+            data: {
+                items,
+                total,
+                currentPage,
+                lastPage,
+            }
+        });
+
+    } catch (error) {
+        next(error);
+    }
+};
 
 export default {
     markSingleAttendance,
     bulkMarkAttendance,
     getAttendanceByDate,
     getPatientsWithAttendance,
+    getAttendanceByPatientId
 };

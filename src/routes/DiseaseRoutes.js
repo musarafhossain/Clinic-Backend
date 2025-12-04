@@ -1,12 +1,13 @@
 import express from 'express';
 import DiseaseController from '../controllers/DiseaseController.js';
+import authMiddleware from '../middlewares/verifyJwtToken.js';
 
 const router = express.Router();
 
-router.post('', DiseaseController.createDisease);
-router.get('', DiseaseController.getAllDiseases);
-router.get('/:id', DiseaseController.getDiseaseById);
-router.patch('/:id', DiseaseController.updateDiseaseById);
-router.delete('/:id', DiseaseController.deleteDiseaseById);
+router.post('', authMiddleware, DiseaseController.createDisease);
+router.get('', authMiddleware, DiseaseController.getAllDiseases);
+router.get('/:id', authMiddleware, DiseaseController.getDiseaseById);
+router.patch('/:id', authMiddleware, DiseaseController.updateDiseaseById);
+router.delete('/:id', authMiddleware, DiseaseController.deleteDiseaseById);
 
 export default router;

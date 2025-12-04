@@ -11,7 +11,9 @@ const toggleAttendance = async ({
     const conn = await db.getConnection();
     try {
         await conn.beginTransaction();
+
         if (is_present) {
+            // Check if attendance exists for this date
             const [existing] = await conn.execute(
                 `SELECT disease_amount FROM attendances
                  WHERE patient_id = ? AND DATE(datetime) = ?`,
@@ -21,6 +23,7 @@ const toggleAttendance = async ({
             let oldAmount = existing.length ? Number(existing[0].disease_amount) : 0;
             let newAmount = Number(disease_amount);
 
+            // Insert or update attendance
             const [result] = await conn.execute(
                 `INSERT INTO attendances
                     (patient_id, disease_name, disease_amount, added_by, created_at, datetime)
@@ -32,11 +35,20 @@ const toggleAttendance = async ({
                 [patient_id, disease_name, newAmount, added_by, date]
             );
 
+            // Update total_bill (difference)
             const diff = newAmount - oldAmount;
             if (diff !== 0) {
                 await conn.execute(
                     `UPDATE patients SET total_bill = total_bill + ? WHERE id = ?`,
                     [diff, patient_id]
+                );
+            }
+
+            // If new attendance record (not existed earlier), increase total_attendance
+            if (!existing.length) {
+                await conn.execute(
+                    `UPDATE patients SET total_attendance = total_attendance + 1 WHERE id = ?`,
+                    [patient_id]
                 );
             }
 
@@ -50,6 +62,7 @@ const toggleAttendance = async ({
             };
 
         } else {
+            // Removing attendance -------------------------
             const [existing] = await conn.execute(
                 `SELECT disease_amount FROM attendances
                  WHERE patient_id = ? AND DATE(datetime) = ?`,
@@ -58,16 +71,26 @@ const toggleAttendance = async ({
 
             let oldAmount = existing.length ? Number(existing[0].disease_amount) : 0;
 
+            // Delete attendance record
             const [result] = await conn.execute(
                 `DELETE FROM attendances
                  WHERE patient_id = ? AND DATE(datetime) = ?`,
                 [patient_id, date]
             );
 
+            // Reduce total_bill if attendance existed
             if (oldAmount > 0) {
                 await conn.execute(
                     `UPDATE patients SET total_bill = total_bill - ? WHERE id = ?`,
                     [oldAmount, patient_id]
+                );
+            }
+
+            // Reduce total_attendance only if a record existed
+            if (existing.length) {
+                await conn.execute(
+                    `UPDATE patients SET total_attendance = total_attendance - 1 WHERE id = ?`,
+                    [patient_id]
                 );
             }
 

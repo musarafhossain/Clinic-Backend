@@ -41,6 +41,7 @@ const getAllPatients = async (page = 1, limit = 10, search = "", status = "") =>
             p.enrollment_date,
             p.amount_paid,
             p.total_bill,
+            p.total_attendance,
             p.created_at,
             p.updated_at,
 
@@ -114,6 +115,7 @@ const getPatientById = async (patientId) => {
             p.enrollment_date,
             p.amount_paid,
             p.total_bill,
+            p.total_attendance,
             p.created_at,
             p.updated_at,
 

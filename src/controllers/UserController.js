@@ -116,9 +116,9 @@ const updateUserById = async (req, res, next) => {
 
         let userData = {
             ...currUser,
-            name: req.body.name || currUser.name || null,
-            email: req.body.email || currUser.email || null,
-            phone: req.body.phone || currUser.phone || null,
+            name: req.body.name || null,
+            email: req.body.email || null,
+            phone: req.body.phone || null,
             password: null,
         };
 

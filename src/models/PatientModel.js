@@ -1,7 +1,7 @@
 import db from '../config/db.js';
 
 const createPatient = async (patientData) => {
-    const { name, father_name, dob, gender, status = 'ACTIVE', disease, phone, address, enrollment_date, amount_paid = 0, total_bill = 0, created_by, updated_by, } = patientData;
+    const { name, father_name, dob, gender, status, disease, phone, address, enrollment_date, amount_paid = 0, total_bill = 0, created_by, updated_by, } = patientData;
 
     const [result] = await db.execute(
         `INSERT INTO patients 

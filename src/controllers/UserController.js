@@ -119,6 +119,7 @@ const updateUserById = async (req, res, next) => {
             name: req.body.name || currUser.name || null,
             email: req.body.email || currUser.email || null,
             phone: req.body.phone || currUser.phone || null,
+            password: null,
         };
 
         if (!userData.email) {
@@ -134,6 +135,11 @@ const updateUserById = async (req, res, next) => {
                 success: false,
                 message: "Email is already taken"
             });
+        }
+
+        if (req.body.password) {
+            const hashedPassword = await bcrypt.hash(req.body.password, 10);
+            userData.password = hashedPassword;
         }
 
         const updatedUser = await UserModel.updateUserById(userId, userData);

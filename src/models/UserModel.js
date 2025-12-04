@@ -73,14 +73,27 @@ const getUserByEmail = async (email) => {
 };
 
 const updateUserById = async (userId, userData) => {
-    const { name, email, phone } = userData;
+    const { name, email, phone, password } = userData;
+
+    let updateFields = ["name = ?", "email = ?", "phone = ?"];
+    let updateValues = [name, email, phone];
+
+    if (password) {
+        updateFields.push("password = ?");
+        updateValues.push(password);
+    }
+
+    updateValues.push(userId);
 
     await db.execute(
-        "UPDATE users SET name = ?, email = ?, phone = ?, updated_at = NOW() WHERE id = ?",
-        [name, email, phone, userId]
+        `UPDATE users SET ${updateFields.join(", ")}, updated_at = NOW() WHERE id = ?`,
+        updateValues
     );
 
-    return { id: userId, ...userData };
+    return {
+        id: userId,
+        ...userData,
+    };
 };
 
 const checkUserExist = async (userId, email) => {

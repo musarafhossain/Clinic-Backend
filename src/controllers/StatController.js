@@ -2,7 +2,8 @@ import StatModel from '../models/StatModel.js';
 
 const getHomeStats = async (req, res, next) => {
     try {
-        const data = await StatModel.getHomeStats();
+        const today = req.query.today || "";
+        const data = await StatModel.getHomeStats(today);
 
         return res.status(200).json({
             success: true,

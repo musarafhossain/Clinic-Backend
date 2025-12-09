@@ -11,7 +11,14 @@ const pool = mysql.createPool({
     waitForConnections: true,
     connectionLimit: 10,
     queueLimit: 0,
-    jsonStrings: false
+    timezone: '+05:30'
 });
+
+pool.getConnection()
+    .then(conn => {
+        return conn.query("SET time_zone = '+05:30'")
+            .then(() => conn.release());
+    })
+    .catch(err => console.error("Timezone set error:", err));
 
 export default pool;

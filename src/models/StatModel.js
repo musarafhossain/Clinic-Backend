@@ -2,8 +2,8 @@ import db from '../config/db.js';
 
 const getHomeStats = async (today) => {
     const currentDate = today ? new Date(today) : new Date();
-    //const todayStr = currentDate.toISOString().split("T")[0];
-    const todayStr = '2025-12-10';
+    const todayStr = currentDate.toISOString().split("T")[0];
+    //const todayStr = '2025-12-10';
 
     const [todayAttendanceRows] = await db.execute(
         `SELECT COUNT(*) AS count 

@@ -44,7 +44,7 @@ const getHomeStats = async (today) => {
     const last7 = [];
 
     for (let i = 6; i >= 0; i--) {
-        const d = today ? new Date(today) : new Date();
+        const d = new Date();
         d.setDate(d.getDate() - i);
         const key = d.toISOString().split("T")[0];
         const row = attendance7Rows.find(r => {

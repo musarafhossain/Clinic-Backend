@@ -12,12 +12,14 @@ const markSingleAttendance = async (req, res, next) => {
             return res.status(400).json({ success: false, message: "date is required" });
         }
 
+        const formattedDate = `${date} 00:00:00`;
+
         const result = await AttendanceModel.toggleAttendance({
             patient_id,
             disease_name,
             disease_amount,
             added_by,
-            date,
+            formattedDate,
             is_present
         });
 

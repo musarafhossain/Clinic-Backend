@@ -19,7 +19,7 @@ const markSingleAttendance = async (req, res, next) => {
             disease_name,
             disease_amount,
             added_by,
-            formattedDate,
+            date: formattedDate,
             is_present
         });
 

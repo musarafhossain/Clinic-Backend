@@ -5,7 +5,7 @@
 */
 export function getCurrentDateTime() {
     // Return current date time
-    return new Date().toISOString();
+    return new Date().toLocaleTimeString();
 }
 
 // Get MySQL date with current time

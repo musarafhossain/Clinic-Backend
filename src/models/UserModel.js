@@ -150,11 +150,11 @@ const updateUserById = async (userId, userData) => {
         updateValues.push(password);
     }
 
-    // Add user id value
-    updateValues.push(userId);
-
     // Add updated at value
     updateValues.push(getCurrentDateTime());
+
+    // Add user id value
+    updateValues.push(userId);
 
     // Update user
     await db.execute(

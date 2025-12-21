@@ -4,6 +4,7 @@ import { UserRoutes, AuthRoutes, DiseaseRoutes, PatientRoutes, AttendanceRoutes,
 import verifyJwtToken from './middlewares/verifyJwtToken.js';
 import passport from 'passport';
 import './config/passport-jwt-strategy.js';
+import { getCurrentDateTime } from './utils/time.js';
 
 const app = express();
 
@@ -26,7 +27,10 @@ app.use('/api/patients', verifyJwtToken, passport.authenticate('jwt', { session:
 app.use('/api/attendances', verifyJwtToken, passport.authenticate('jwt', { session: false }), AttendanceRoutes);
 app.use('/api/stats', verifyJwtToken, passport.authenticate('jwt', { session: false }), StatRoutes);
 app.all('/', (req, res) => {
-  res.json({ message: 'Server is running' });
+  res.json({ 
+    message: 'Server is running!',
+    datetime: getCurrentDateTime(), 
+  });
 });
 app.use((err, req, res, next) => {
   res.status(err.status || 500).json({

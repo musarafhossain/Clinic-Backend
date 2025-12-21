@@ -17,7 +17,7 @@ export function getCurrentDateTime() {
   return `${yyyy}-${mm}-${dd} ${hh}:${mi}:${ss}`;
 }
 
-// Get MySQL date with current time
+// Get date with current time
 /*
     @param {string} dateOnly - Date only
     @returns {string} - MySQL date with current time

@@ -1,14 +1,21 @@
 import UserModel from '../models/UserModel.js';
 import bcrypt from 'bcrypt';
+import { getCurrentDateTime } from '../utils/time.js';
 
+// Create user controller
 const createUser = async (req, res, next) => {
     try {
+        // Prepare user data
         const userData = {
             name: req.body.name || null,
             email: req.body.email || null,
             password: req.body.password || null,
             phone: req.body.phone || null,
+            created_at: getCurrentDateTime(),
+            updated_at: getCurrentDateTime(),
         };
+
+        // Validate user data
         if (!userData?.email || !userData?.password) {
             return res.status(400).json({
                 success: false,
@@ -16,8 +23,8 @@ const createUser = async (req, res, next) => {
             });
         }
 
+        // Check if user already exists
         const existingUser = await UserModel.getUserByEmail(userData.email);
-
         if (existingUser) {
             return res.status(409).json({
                 success: false,
@@ -25,15 +32,19 @@ const createUser = async (req, res, next) => {
             });
         }
 
+        // Hash password
         const hashedPassword = await bcrypt.hash(userData.password, 10);
         userData.password = hashedPassword;
 
+        // Create user
         const newUser = await UserModel.createUser(userData);
 
+        // Remove password from response
         if (newUser && newUser.password) {
             delete newUser.password;
         }
 
+        // Return response
         res.status(201).json({
             success: true,
             data: newUser,
@@ -44,16 +55,22 @@ const createUser = async (req, res, next) => {
     }
 };
 
+// Get all users controller
 const getAllUsers = async (req, res, next) => {
     try {
+        // Get query parameters
         const page = Number(req.query.page) || 1;
         const limit = Number(req.query.limit) || 10;
         const search = req.query.search || "";
+
+        // Get current user id
         const currentUserId = req.user?.id;
 
-        const { items, total, currentPage, lastPage } = 
+        // Get users
+        const { items, total, currentPage, lastPage } =
             await UserModel.getAllUsers(page, limit, search, currentUserId);
 
+        // Return response
         res.status(200).json({
             success: true,
             message: 'Users retrieved successfully',
@@ -69,11 +86,16 @@ const getAllUsers = async (req, res, next) => {
     }
 };
 
+// Get user by id controller
 const getUserById = async (req, res, next) => {
     try {
+        // Get user id
         const userId = req.params.id;
+
+        // Get user
         const user = await UserModel.getUserById(userId);
 
+        // Check if user exists 
         if (!user) {
             return res.status(404).json({
                 success: false,
@@ -81,10 +103,12 @@ const getUserById = async (req, res, next) => {
             });
         }
 
+        // Remove password from response
         if (user && user.password) {
             delete user.password;
         }
 
+        // Return response
         res.status(200).json({
             success: true,
             data: user,
@@ -95,10 +119,13 @@ const getUserById = async (req, res, next) => {
     }
 };
 
+// Update user by id controller
 const updateUserById = async (req, res, next) => {
     try {
+        // Get user id
         const userId = req.params.id;
 
+        // Check if user id is provided
         if (!userId) {
             return res.status(400).json({
                 success: false,
@@ -106,7 +133,10 @@ const updateUserById = async (req, res, next) => {
             });
         }
 
+        // Get current user
         const currUser = await UserModel.getUserById(userId);
+
+        // Check if user exists
         if (!currUser) {
             return res.status(404).json({
                 success: false,
@@ -114,14 +144,17 @@ const updateUserById = async (req, res, next) => {
             });
         }
 
+        // Prepare user data
         let userData = {
             ...currUser,
             name: req.body.name || null,
             email: req.body.email || null,
             phone: req.body.phone || null,
             password: null,
+            updated_at: getCurrentDateTime(),
         };
 
+        // Check if email is provided
         if (!userData.email) {
             return res.status(400).json({
                 success: false,
@@ -129,6 +162,7 @@ const updateUserById = async (req, res, next) => {
             });
         }
 
+        // Check if email is already taken
         const userExist = await UserModel.checkUserExist(userId, userData.email);
         if (userExist) {
             return res.status(409).json({
@@ -137,17 +171,21 @@ const updateUserById = async (req, res, next) => {
             });
         }
 
+        // Check if password is provided
         if (req.body.password) {
             const hashedPassword = await bcrypt.hash(req.body.password, 10);
             userData.password = hashedPassword;
         }
 
+        // Update user
         const updatedUser = await UserModel.updateUserById(userId, userData);
 
+        // Remove password from response
         if (updatedUser && updatedUser.password) {
             delete updatedUser.password;
         }
 
+        // Return response
         return res.status(200).json({
             success: true,
             data: updatedUser,
@@ -159,11 +197,16 @@ const updateUserById = async (req, res, next) => {
     }
 };
 
+// Delete user by id controller
 const deleteUserById = async (req, res, next) => {
     try {
+        // Get id from params
         const userId = req.params.id;
+
+        // Get user by id
         const user = await UserModel.getUserById(userId);
 
+        // Check if user exists
         if (!user) {
             return res.status(404).json({
                 success: false,
@@ -171,12 +214,15 @@ const deleteUserById = async (req, res, next) => {
             });
         }
 
+        // Delete user
         await UserModel.deleteUserById(userId);
 
+        // Remove password from response
         if (user && user.password) {
             delete user.password;
         }
 
+        // Return response
         res.status(200).json({
             success: true,
             message: 'User deleted successfully',

@@ -1,5 +1,4 @@
 import db from '../config/db.js';
-import { getCurrentDateTime } from '../utils/time.js';
 
 // Create user
 /*
@@ -8,20 +7,25 @@ import { getCurrentDateTime } from '../utils/time.js';
     @param {string} userData.email - User email
     @param {string} userData.password - User password
     @param {string} userData.phone - User phone
+    @param {string} userData.created_at - User created at
+    @param {string} userData.updated_at - User updated at
     @returns {Promise<Object>} - User data
 */
 const createUser = async (userData) => {
     // Destructure user data
-    const { name, email, password, phone } = userData;
+    const { name, email, password, phone, created_at, updated_at } = userData;
 
     // Insert user
     const [result] = await db.execute(
         'INSERT INTO users (name, email, password, phone, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)',
-        [name, email, password, phone, getCurrentDateTime(), getCurrentDateTime()]
+        [name, email, password, phone, created_at, updated_at]
     );
 
+    // Get created user
+    const createdUser = await getUserById(result.insertId);
+
     // Return user data
-    return { id: result.insertId, ...userData };
+    return createdUser;
 }
 
 // Get all users
@@ -33,67 +37,78 @@ const createUser = async (userData) => {
     @param {number} params.excludeUserId - Exclude user id
     @returns {Promise<Object>} - User data
 */
-const getAllUsers = async (page = 1, limit = 10, search = "", excludeUserId = null) => {
+const getAllUsers = async (
+    page = 1,
+    limit = 10,
+    search = "",
+    excludeUserId = null
+) => {
     // Calculate offset
     const offset = (page - 1) * limit;
 
-    // Create search pattern
+    // Search pattern
     const searchPattern = `%${search}%`;
 
-    // Create params
+    // Params for main query
     const params = [searchPattern, searchPattern];
-    let whereClause = `(name LIKE ? OR email LIKE ?)`;
+
+    // WHERE clause (use table alias!)
+    let whereClause = `(u.name LIKE ? OR u.email LIKE ?)`;
 
     // Exclude user id if provided
     if (excludeUserId) {
-        whereClause += ` AND id != ?`;
+        whereClause += ` AND u.id != ?`;
         params.push(excludeUserId);
     }
 
-    // Add limit and offset
+    // Pagination params
     params.push(limit, offset);
 
-    // Get users
+    // Fetch users
     const [rows] = await db.execute(
         `
-        SELECT id, name, email, phone, created_at, updated_at 
-        FROM users
+        SELECT 
+            u.id,
+            u.name,
+            u.email,
+            u.phone,
+            u.created_at,
+            u.updated_at,
+            t.created_at AS lastLogin
+        FROM users u
+        LEFT JOIN user_jwt_tokens t 
+            ON t.user_id = u.id
         WHERE ${whereClause}
-        ORDER BY id DESC
+        ORDER BY u.id DESC
         LIMIT ? OFFSET ?
         `,
         params
     );
 
-    // Get total count
+    // ---------- COUNT QUERY ----------
     const countParams = [searchPattern, searchPattern];
+    let countWhere = `(u.name LIKE ? OR u.email LIKE ?)`;
 
-    // Create count where clause
-    let countWhere = `(name LIKE ? OR email LIKE ?)`;
-
-    // Exclude user id if provided
     if (excludeUserId) {
-        countWhere += ` AND id != ?`;
+        countWhere += ` AND u.id != ?`;
         countParams.push(excludeUserId);
     }
 
-    // Get total count
     const [[{ total }]] = await db.execute(
         `
-        SELECT COUNT(*) as total 
-        FROM users 
+        SELECT COUNT(*) AS total
+        FROM users u
         WHERE ${countWhere}
         `,
         countParams
     );
 
-    // Return users
     return {
         items: rows,
         currentPage: page,
-        limit: limit,
-        total: total,
-        lastPage: Math.ceil(total / limit), // Calculate last page
+        limit,
+        total,
+        lastPage: Math.ceil(total / limit),
     };
 };
 
@@ -104,7 +119,19 @@ const getAllUsers = async (page = 1, limit = 10, search = "", excludeUserId = nu
 */
 const getUserById = async (userId) => {
     // Get user by id
-    const [rows] = await db.execute('SELECT * FROM users WHERE id = ? LIMIT 1', [userId]);
+    const [rows] = await db.execute(
+        `
+        SELECT 
+            u.*,
+            t.created_at AS lastLogin
+        FROM users u
+        LEFT JOIN user_jwt_tokens t 
+            ON t.user_id = u.id
+        WHERE u.id = ?
+        LIMIT 1
+        `,
+        [userId]
+    );
 
     // Return user
     return rows[0];
@@ -118,7 +145,16 @@ const getUserById = async (userId) => {
 const getUserByEmail = async (email) => {
     // Get user by email
     const [rows] = await db.execute(
-        'SELECT * FROM users WHERE email = ? LIMIT 1',
+        `
+        SELECT 
+            u.*,
+            t.created_at AS lastLogin
+        FROM users u
+        LEFT JOIN user_jwt_tokens t 
+            ON t.user_id = u.id
+        WHERE u.email = ?
+        LIMIT 1
+        `,
         [email]
     );
 
@@ -134,11 +170,12 @@ const getUserByEmail = async (email) => {
     @param {string} userData.email - User email
     @param {string} userData.password - User password
     @param {string} userData.phone - User phone
+    @param {string} userData.updated_at - User updated at
     @returns {Promise<Object>} - User data
 */
 const updateUserById = async (userId, userData) => {
     // Destructure user data
-    const { name, email, phone, password } = userData;
+    const { name, email, phone, password, updated_at } = userData;
 
     // Create update fields and values
     let updateFields = ["name = ?", "email = ?", "phone = ?"];
@@ -151,7 +188,7 @@ const updateUserById = async (userId, userData) => {
     }
 
     // Add updated at value
-    updateValues.push(getCurrentDateTime());
+    updateValues.push(updated_at);
 
     // Add user id value
     updateValues.push(userId);
@@ -162,11 +199,11 @@ const updateUserById = async (userId, userData) => {
         updateValues
     );
 
+    // Get updated user
+    const updatedUser = await getUserById(userId);
+
     // Return updated user
-    return {
-        id: userId,
-        ...userData,
-    };
+    return updatedUser;
 };
 
 // Check user exist

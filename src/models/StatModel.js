@@ -1,22 +1,22 @@
 import db from '../config/db.js';
+import { getCurrentDate } from '../utils/time.js';
 
 const getHomeStats = async (today) => {
-    const currentDate = today ? new Date(today) : new Date();
-    const todayStr = currentDate.toISOString().split("T")[0];
+    const currentDate = today ? today : getCurrentDate();
 
     const [todayAttendanceRows] = await db.execute(
         `SELECT COUNT(*) AS count 
          FROM attendances 
          WHERE DATE(datetime) = ?`,
-        [todayStr]
+        [currentDate]
     );
     const todays_attendance = todayAttendanceRows[0].count;
 
     const [todayRevenueRows] = await db.execute(
         `SELECT COALESCE(SUM(amount), 0) AS total 
-         FROM transactions 
+         FROM payment_history 
          WHERE DATE(created_at) = ?`,
-        [todayStr]
+        [currentDate]
     );
     const todays_revenue = todayRevenueRows[0].total;
 
@@ -36,9 +36,10 @@ const getHomeStats = async (today) => {
             DATE(datetime) AS day,
             COUNT(*) AS count
          FROM attendances
-         WHERE datetime >= DATE_SUB(CURDATE(), INTERVAL 6 DAY)
+         WHERE datetime >= DATE_SUB(?, INTERVAL 6 DAY)
          GROUP BY DATE(datetime)
-         ORDER BY day ASC`
+         ORDER BY day ASC`,
+        [currentDate]
     );
 
     const last7 = [];

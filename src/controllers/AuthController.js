@@ -49,8 +49,10 @@ const login = async (req, res, next) => {
         res.status(200).json({
             success: true,
             message: 'Login successful',
-            token: jwtToken,
-            user,
+            data: {
+                token: jwtToken,
+                user,
+            }
         });
     } catch (error) {
         next(error);
@@ -68,7 +70,8 @@ const me = async (req, res) => {
     // Send response
     res.status(200).json({
         success: true,
-        user,
+        message: 'User retrieved successfully',
+        data: user,
     });
 };
 

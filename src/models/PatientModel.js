@@ -1,52 +1,108 @@
 import db from '../config/db.js';
 
+// Create a new patient
+/*
+    @param {Object} patientData
+    @param {string} patientData.name
+    @param {string} patientData.guardian_name
+    @param {string} patientData.dob
+    @param {string} patientData.gender
+    @param {string} patientData.status
+    @param {string} patientData.disease
+    @param {string} patientData.phone
+    @param {string} patientData.address
+    @param {string} patientData.created_at
+    @param {string} patientData.created_by
+    @param {string} patientData.updated_at
+    @param {string} patientData.updated_by
+    @returns {Promise<Object | null>}
+*/
 const createPatient = async (patientData) => {
-    const { name, father_name, dob, gender, status, disease, phone, address, enrollment_date, amount_paid = 0, total_bill = 0, created_by, updated_by, } = patientData;
+    // Destructure the patient data
+    const { name, guardian_name, dob, gender, status, disease, phone, address, created_at, created_by, updated_at, updated_by, } = patientData;
 
+    // Insert the patient into the database
     const [result] = await db.execute(
         `INSERT INTO patients 
-        (name, father_name, dob, gender, status, disease, phone, address, enrollment_date, amount_paid, total_bill, created_at, created_by, updated_at, updated_by) 
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), ?, NOW(), ?)`,
-        [name, father_name, dob, gender, status, disease, phone, address, enrollment_date, amount_paid, total_bill, created_by, updated_by]
+        (name, guardian_name, dob, gender, status, disease, phone, address, created_at, created_by, updated_at, updated_by) 
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [name, guardian_name, dob, gender, status, disease, phone, address, created_at, created_by, updated_at, updated_by]
     );
 
-    return getPatientById(result.insertId) ?? null;
+    // Get the created patient
+    const createdPatient = await getPatientById(result.insertId);
+
+    // Return the created patient
+    return createdPatient ?? null;
 };
 
+// Get all patients
+/*
+    @param {Object} params
+    @param {number} params.page
+    @param {number} params.limit
+    @param {string} params.search
+    @param {string} params.status
+    @returns {Promise<Object | null>}
+*/
 const getAllPatients = async (page = 1, limit = 10, search = "", status = "") => {
+    // Calculate the offset
     const offset = (page - 1) * limit;
+
+    // Create the search pattern
     const searchPattern = `%${search}%`;
 
+    // Create the parameters array
     const params = [searchPattern, searchPattern];
+
+    // Create the where clause
     let whereClause = `(p.name LIKE ? OR p.phone LIKE ?)`;
 
+    // Add the status to the where clause if it exists
     if (status) {
         whereClause += ` AND p.status = ?`;
         params.push(status);
     }
 
+    // Add the limit and offset to the parameters array
     params.push(limit, offset);
 
+    // Execute the query
     const [rows] = await db.execute(
         `
         SELECT 
             p.id,
             p.name,
-            p.father_name,
+            p.guardian_name,
             p.dob,
             p.gender,
             p.status,
             p.phone,
             p.address,
-            p.enrollment_date,
-            p.amount_paid,
-            p.total_bill,
-            p.total_attendance,
             p.created_at,
             p.updated_at,
 
             uc.name AS created_by,
             uu.name AS updated_by,
+
+            -- Calculated fields
+            (
+                SELECT COALESCE(SUM(ph.amount), 0)
+                FROM payment_history ph
+                WHERE ph.patient_id = p.id
+            ) AS amount_paid,
+
+            (
+                SELECT COALESCE(SUM(a.disease_amount), 0)
+                FROM attendances a
+                WHERE a.patient_id = p.id
+            ) AS total_bill,
+
+            (
+                SELECT COUNT(*)
+                FROM attendances a
+                WHERE a.patient_id = p.id
+            ) AS total_attendance,
 
             -- Disease as JSON object
             IF(
@@ -70,13 +126,13 @@ const getAllPatients = async (page = 1, limit = 10, search = "", status = "") =>
         params
     );
 
+    // Calculate the total number of patients
     const countParams = [searchPattern, searchPattern];
     let countWhere = `(name LIKE ? OR phone LIKE ?)`;
     if (status) {
         countWhere += ` AND status = ?`;
         countParams.push(status);
     }
-
     const [[{ total }]] = await db.execute(
         `
         SELECT COUNT(*) as total 
@@ -86,11 +142,13 @@ const getAllPatients = async (page = 1, limit = 10, search = "", status = "") =>
         countParams
     );
 
+    // Format the rows
     const formattedRows = rows.map((p) => ({
         ...p,
         disease: p.disease ? JSON.parse(p.disease) : null,
     }));
 
+    // Return the formatted rows
     return {
         items: formattedRows,
         currentPage: page,
@@ -100,22 +158,24 @@ const getAllPatients = async (page = 1, limit = 10, search = "", status = "") =>
     };
 };
 
+// Get patient by id
+/*
+    @param {number} patientId
+    @returns {Promise<Object | null>}
+*/
 const getPatientById = async (patientId) => {
+    // Get patient by id
     const [rows] = await db.execute(
         `
         SELECT
             p.id,
             p.name,
-            p.father_name,
+            p.guardian_name,
             p.dob,
             p.gender,
             p.status,
             p.phone,
             p.address,
-            p.enrollment_date,
-            p.amount_paid,
-            p.total_bill,
-            p.total_attendance,
             p.created_at,
             p.updated_at,
 
@@ -124,6 +184,25 @@ const getPatientById = async (patientId) => {
 
             -- Updated by user name
             uu.name AS updated_by,
+
+            -- Calculated fields
+            (
+                SELECT COALESCE(SUM(ph.amount), 0)
+                FROM payment_history ph
+                WHERE ph.patient_id = p.id
+            ) AS amount_paid,
+
+            (
+                SELECT COALESCE(SUM(a.disease_amount), 0)
+                FROM attendances a
+                WHERE a.patient_id = p.id
+            ) AS total_bill,
+
+            (
+                SELECT COUNT(*)
+                FROM attendances a
+                WHERE a.patient_id = p.id
+            ) AS total_attendance,
 
             -- Disease as JSON object
             IF(
@@ -146,24 +225,45 @@ const getPatientById = async (patientId) => {
         [patientId]
     );
 
+    // Get the first row
     const patient = rows[0] || null;
 
+    // Parse the disease if it exists
     if (patient?.disease && typeof patient.disease === "string") {
         patient.disease = JSON.parse(patient.disease);
     }
 
+    // Return the patient
     return patient;
 };
 
+// Update patient by id
+/*
+    @param {number} patientId
+    @param {Object} patientData
+    @param {string} patientData.name
+    @param {string} patientData.father_name
+    @param {string} patientData.dob
+    @param {string} patientData.gender
+    @param {string} patientData.status
+    @param {number} patientData.disease
+    @param {string} patientData.phone
+    @param {string} patientData.address
+    @param {number} patientData.updated_by
+    @param {string} patientData.updated_at
+    @returns {Promise<Object | null>}
+*/
 const updatePatientById = async (patientId, patientData) => {
-    const { name, father_name, dob, gender, status, disease, phone, address, updated_by } = patientData;
+    // Destructure the patient data
+    const { name, guardian_name, dob, gender, status, disease, phone, address, updated_by, updated_at } = patientData;
 
+    // Update the patient
     await db.execute(
         `
         UPDATE patients 
         SET 
             name = ?,
-            father_name = ?,
+            guardian_name = ?,
             dob = ?,
             gender = ?,
             status = ?,
@@ -171,180 +271,30 @@ const updatePatientById = async (patientId, patientData) => {
             phone = ?,
             address = ?,
             updated_by = ?,
-            updated_at = NOW()
+            updated_at = ?
         WHERE id = ?
         `,
-        [name, father_name, dob, gender, status, disease, phone, address, updated_by, patientId]
+        [name, guardian_name, dob, gender, status, disease, phone, address, updated_by, updated_at, patientId]
     );
 
-    return await getPatientById(patientId) ?? null;
+    // Get the updated patient
+    const updatedPatient = await getPatientById(patientId);
+
+    // Return the updated patient
+    return updatedPatient ?? null;
 };
 
+// Delete patient by id
+/*
+    @param {number} patientId
+    @returns {Promise<boolean>}
+*/
 const deletePatientById = async (patientId) => {
+    // Delete the patient
     await db.execute('DELETE FROM patients WHERE id = ?', [patientId]);
+
+    // Return true
     return true;
-};
-
-const addPatientPayment = async (patientId, patientData) => {
-    const { amount, note, createdBy } = patientData;
-    const connection = await db.getConnection();
-    try {
-        await connection.beginTransaction();
-        const [txnResult] = await connection.execute(
-            `
-            INSERT INTO transactions (patient_id, amount, note, created_by)
-            VALUES (?, ?, ?, ?)
-            `,
-            [patientId, amount, note ?? "", createdBy ?? 0]
-        );
-        const transactionId = txnResult.insertId;
-        const [prevRows] = await connection.execute(
-            `
-            SELECT amount_paid 
-            FROM patients 
-            WHERE id = ?
-            `,
-            [patientId]
-        );
-        const previousAmount = prevRows?.[0]?.amount_paid ?? 0;
-        const newAmountPaid = Number(previousAmount) + Number(amount);
-        await connection.execute(
-            `
-            UPDATE patients
-            SET amount_paid = ?
-            WHERE id = ?
-            `,
-            [newAmountPaid, patientId]
-        );
-        const [transactionData] = await connection.execute(
-            `
-            SELECT * FROM transactions 
-            WHERE id = ?
-            `,
-            [transactionId]
-        );
-        await connection.commit();
-        return transactionData?.[0] ?? null;
-    } catch (err) {
-        await connection.rollback();
-        throw err;
-    } finally {
-        connection.release();
-    }
-};
-
-const deletePatientHistoryById = async (transactionId) => {
-    const connection = await db.getConnection();
-
-    try {
-        await connection.beginTransaction();
-        const [txnRows] = await connection.execute(
-            `
-            SELECT amount, patient_id 
-            FROM transactions
-            WHERE id = ?
-            `,
-            [transactionId]
-        );
-
-        if (txnRows.length === 0) {
-            throw new Error("Transaction not found");
-        }
-
-        const txnAmount = Number(txnRows[0].amount);
-        const patientId = txnRows[0].patient_id;
-        await connection.execute(
-            `
-            DELETE FROM transactions
-            WHERE id = ?
-            `,
-            [transactionId]
-        );
-        const [patientRows] = await connection.execute(
-            `
-            SELECT amount_paid
-            FROM patients
-            WHERE id = ?
-            `,
-            [patientId]
-        );
-
-        const previousAmountPaid = Number(patientRows[0]?.amount_paid ?? 0);
-        const updatedAmount = previousAmountPaid - txnAmount;
-
-        await connection.execute(
-            `
-            UPDATE patients
-            SET amount_paid = ?
-            WHERE id = ?
-            `,
-            [updatedAmount, patientId]
-        );
-        await connection.commit();
-
-        return {
-            deletedTransactionId: transactionId,
-            deletedAmount: txnAmount,
-            updatedAmountPaid: updatedAmount,
-        };
-
-    } catch (err) {
-        await connection.rollback();
-        throw err;
-    } finally {
-        connection.release();
-    }
-};
-
-const getPaymentHistoryByPatientId = async (page = 1, limit = 10, search = "", patientId) => {
-    const offset = (page - 1) * limit;
-    const searchPattern = `%${search}%`;
-
-    const params = [searchPattern, searchPattern];
-    let whereClause = `(amount LIKE ? OR created_at LIKE ?)`;
-
-    if (patientId) {
-        whereClause += ` AND patient_id = ?`;
-        params.push(patientId);
-    }
-
-    params.push(limit, offset);
-
-    const [rows] = await db.execute(
-        `
-        SELECT *
-        FROM transactions
-        WHERE ${whereClause}
-        ORDER BY id DESC
-        LIMIT ? OFFSET ?
-        `,
-        params
-    );
-
-    const countParams = [searchPattern, searchPattern];
-    let countWhere = `(amount LIKE ? OR created_at LIKE ?)`;
-
-    if (patientId) {
-        countWhere += ` AND patient_id = ?`;
-        countParams.push(patientId);
-    }
-
-    const [[{ total }]] = await db.execute(
-        `
-        SELECT COUNT(*) as total 
-        FROM transactions 
-        WHERE ${countWhere}
-        `,
-        countParams
-    );
-
-    return {
-        items: rows,
-        currentPage: page,
-        limit,
-        total,
-        lastPage: Math.ceil(total / limit),
-    };
 };
 
 export default {
@@ -353,7 +303,4 @@ export default {
     getPatientById,
     updatePatientById,
     deletePatientById,
-    addPatientPayment,
-    getPaymentHistoryByPatientId,
-    deletePatientHistoryById,
 };

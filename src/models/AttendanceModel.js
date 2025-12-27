@@ -1,4 +1,5 @@
 import db from '../config/db.js';
+import { getCurrentDateTime, dateWithCurrentTime } from '../utils/time.js';
 
 const toggleAttendance = async ({
     patient_id,
@@ -27,30 +28,16 @@ const toggleAttendance = async ({
             const [result] = await conn.execute(
                 `INSERT INTO attendances
                     (patient_id, disease_name, disease_amount, added_by, created_at, datetime)
-                 VALUES (?, ?, ?, ?, NOW(), ?)
+                 VALUES (?, ?, ?, ?, ?, ?)
                  ON DUPLICATE KEY UPDATE
                     datetime = VALUES(datetime),
                     disease_name = VALUES(disease_name),
                     disease_amount = VALUES(disease_amount)`,
-                [patient_id, disease_name, newAmount, added_by, date]
+                [patient_id, disease_name, newAmount, added_by, getCurrentDateTime(), dateWithCurrentTime(date)]
             );
 
             // Update total_bill (difference)
             const diff = newAmount - oldAmount;
-            if (diff !== 0) {
-                await conn.execute(
-                    `UPDATE patients SET total_bill = total_bill + ? WHERE id = ?`,
-                    [diff, patient_id]
-                );
-            }
-
-            // If new attendance record (not existed earlier), increase total_attendance
-            if (!existing.length) {
-                await conn.execute(
-                    `UPDATE patients SET total_attendance = total_attendance + 1 WHERE id = ?`,
-                    [patient_id]
-                );
-            }
 
             await conn.commit();
 
@@ -78,22 +65,6 @@ const toggleAttendance = async ({
                 [patient_id, date]
             );
 
-            // Reduce total_bill if attendance existed
-            if (oldAmount > 0) {
-                await conn.execute(
-                    `UPDATE patients SET total_bill = total_bill - ? WHERE id = ?`,
-                    [oldAmount, patient_id]
-                );
-            }
-
-            // Reduce total_attendance only if a record existed
-            if (existing.length) {
-                await conn.execute(
-                    `UPDATE patients SET total_attendance = total_attendance - 1 WHERE id = ?`,
-                    [patient_id]
-                );
-            }
-
             await conn.commit();
 
             return {
@@ -111,7 +82,7 @@ const toggleAttendance = async ({
     }
 };
 
-const getAttendanceHistoryByPatientId = async (page = 1, limit = 10, search = "", patientId) => {
+const getAttendanceByPatientId = async (page = 1, limit = 10, search = "", patientId) => {
     const offset = (page - 1) * limit;
     const searchPattern = `%${search}%`;
 
@@ -162,7 +133,7 @@ const getAttendanceHistoryByPatientId = async (page = 1, limit = 10, search = ""
     };
 };
 
-const getAllPatientsWithAttendance = async (
+const getAllAttendance = async (
     page = 1,
     limit = 10,
     search = "",
@@ -187,21 +158,7 @@ const getAllPatientsWithAttendance = async (
         SELECT 
             p.id,
             p.name,
-            p.father_name,
-            p.dob,
-            p.gender,
-            p.status,
-            p.phone,
-            p.address,
-            p.enrollment_date,
-            p.amount_paid,
-            p.total_bill,
-            p.created_at,
-            p.updated_at,
-
-            uc.name AS created_by,
-            uu.name AS updated_by,
-
+            p.guardian_name,
             IF(
                 d.id IS NULL,
                 NULL,
@@ -211,10 +168,7 @@ const getAllPatientsWithAttendance = async (
                     'amount', d.amount
                 )
             ) AS disease
-
         FROM patients p
-        LEFT JOIN users uc ON p.created_by = uc.id
-        LEFT JOIN users uu ON p.updated_by = uu.id
         LEFT JOIN diseases d ON p.disease = d.id
         WHERE ${whereClause}
         ORDER BY p.id DESC
@@ -287,6 +241,6 @@ const getAllPatientsWithAttendance = async (
 
 export default {
     toggleAttendance,
-    getAllPatientsWithAttendance,
-    getAttendanceHistoryByPatientId,
+    getAllAttendance,
+    getAttendanceByPatientId,
 };

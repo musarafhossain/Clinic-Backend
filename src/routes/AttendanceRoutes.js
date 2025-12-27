@@ -4,8 +4,9 @@ import authMiddleware from '../middlewares/verifyJwtToken.js';
 
 const router = express.Router();
 
-router.post('/single', authMiddleware, AttendanceController.markSingleAttendance);
-router.get('/attendance-history', authMiddleware, AttendanceController.getAttendanceHistoryByPatientId);
-router.get('/patients', authMiddleware, AttendanceController.getPatientsWithAttendance);
+router.get('', authMiddleware, AttendanceController.getAllAttendance);
+router.post('/mark-attendance', authMiddleware, AttendanceController.markAttendance);
+router.get('/:patientId', authMiddleware, AttendanceController.getAttendanceByPatientId);
+
 
 export default router;

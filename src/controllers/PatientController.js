@@ -1,23 +1,26 @@
 import PatientModel from '../models/PatientModel.js';
+import { getCurrentDateTime } from '../utils/time.js';
 
+// Create patient controller
 const createPatient = async (req, res, next) => {
     try {
+        // Prepare patient data
         const patientData = {
             name: req.body.name ?? null,
-            father_name: req.body.father_name ?? null,
+            guardian_name: req.body.guardian_name ?? null,
             dob: req.body.dob ?? null,
             gender: req.body.gender ?? null,
             status: req.body.status ?? "ONGOING",
             disease: req.body.disease?.id ?? null,
             phone: req.body.phone ?? null,
             address: req.body.address ?? null,
-            enrollment_date: req.body.enrollment_date ?? null,
-            amount_paid: req.body.amount_paid ?? 0,
-            total_bill: req.body.total_bill ?? 0,
             created_by: req.user?.id ?? null,
             updated_by: req.user?.id ?? null,
+            created_at: getCurrentDateTime(),
+            updated_at: getCurrentDateTime(),
         };
 
+        // Validate patient data
         if (!patientData.name) {
             return res.status(400).json({
                 success: false,
@@ -25,26 +28,30 @@ const createPatient = async (req, res, next) => {
             });
         }
 
+        // Create new patient
         const newPatient = await PatientModel.createPatient(patientData);
 
+        // Return response
         return res.status(201).json({
             success: true,
             data: newPatient,
             message: "Patient created successfully"
         });
-
     } catch (error) {
         next(error);
     }
 };
 
+// Get all patients controller
 const getAllPatients = async (req, res, next) => {
     try {
+        // Get query parameters
         const page = Number(req.query.page) || 1;
         const limit = Number(req.query.limit) || 10;
         const search = req.query.search || "";
         const status = req.query.status || "";
 
+        // Get all patients
         const {
             items,
             total,
@@ -52,6 +59,7 @@ const getAllPatients = async (req, res, next) => {
             lastPage
         } = await PatientModel.getAllPatients(page, limit, search, status);
 
+        // Return response
         return res.status(200).json({
             success: true,
             message: "Patients retrieved successfully",
@@ -68,12 +76,16 @@ const getAllPatients = async (req, res, next) => {
     }
 };
 
+// Get patient by id controller
 const getPatientById = async (req, res, next) => {
     try {
+        // Get patient id
         const patientId = req.params.id;
 
+        // Get patient by id
         const patient = await PatientModel.getPatientById(patientId);
 
+        // Check if patient exists
         if (!patient) {
             return res.status(404).json({
                 success: false,
@@ -81,6 +93,7 @@ const getPatientById = async (req, res, next) => {
             });
         }
 
+        // Return response
         return res.status(200).json({
             success: true,
             data: patient,
@@ -92,10 +105,13 @@ const getPatientById = async (req, res, next) => {
     }
 };
 
+// Update patient by id controller
 const updatePatientById = async (req, res, next) => {
     try {
+        // Get patient id
         const patientId = req.params.id;
 
+        // Check if patient id exists
         if (!patientId) {
             return res.status(400).json({
                 success: false,
@@ -103,6 +119,7 @@ const updatePatientById = async (req, res, next) => {
             });
         }
 
+        // Get current patient
         const currPatient = await PatientModel.getPatientById(patientId);
         if (!currPatient) {
             return res.status(404).json({
@@ -111,9 +128,10 @@ const updatePatientById = async (req, res, next) => {
             });
         }
 
+        // Prepare patient data
         let patientData = {
             name: req.body.name ?? currPatient.name ?? null,
-            father_name: req.body.father_name ?? currPatient.father_name ?? null,
+            guardian_name: req.body.guardian_name ?? currPatient.guardian_name ?? null,
             dob: req.body.dob ?? currPatient.dob ?? null,
             gender: req.body.gender ?? currPatient.gender ?? null,
             status: req.body.status ?? currPatient.status ?? "ONGOING",
@@ -121,8 +139,10 @@ const updatePatientById = async (req, res, next) => {
             phone: req.body.phone ?? currPatient.phone ?? null,
             address: req.body.address ?? currPatient.address ?? null,
             updated_by: req.user?.id ?? currPatient.updated_by ?? null,
+            updated_at: getCurrentDateTime(),
         };
 
+        // Validate patient data
         if (!patientData.name) {
             return res.status(400).json({
                 success: false,
@@ -130,8 +150,10 @@ const updatePatientById = async (req, res, next) => {
             });
         }
 
+        // Update patient
         const updatedPatient = await PatientModel.updatePatientById(patientId, patientData);
 
+        // Return response
         return res.status(200).json({
             success: true,
             data: updatedPatient,
@@ -143,12 +165,16 @@ const updatePatientById = async (req, res, next) => {
     }
 };
 
+// Delete patient by id controller
 const deletePatientById = async (req, res, next) => {
     try {
+        // Get patient id
         const patientId = req.params.id;
 
+        // Get patient by id
         const patient = await PatientModel.getPatientById(patientId);
 
+        // Check if patient exists
         if (!patient) {
             return res.status(404).json({
                 success: false,
@@ -156,97 +182,15 @@ const deletePatientById = async (req, res, next) => {
             });
         }
 
+        // Delete patient
         await PatientModel.deletePatientById(patientId);
 
+        // Return response
         res.status(200).json({
             success: true,
             message: 'Patient deleted successfully',
             data: patient
         });
-    } catch (error) {
-        next(error);
-    }
-};
-
-const addPatientPayment = async (req, res, next) => {
-    try {
-        const patientId = req.params.id;
-        const patient = await PatientModel.getPatientById(patientId);
-        if (!patient) {
-            return res.status(404).json({
-                success: false,
-                message: 'Patient not found'
-            });
-        }
-
-        const txnData = {
-            amount: req.body.amount ?? null,
-            note: req.body.note ?? null,
-            createdBy: req.user?.id ?? null,
-        };
-
-         if (!txnData.amount) {
-            return res.status(400).json({
-                success: false,
-                message: "Missing required fields: amount"
-            });
-        }
-
-        const data = await PatientModel.addPatientPayment(patientId, txnData);
-
-        res.status(200).json({
-            success: true,
-            message: 'Payment added successfully',
-            data: data
-        });
-    } catch (error) {
-        next(error);
-    }
-};
-
-const deletePaymentHistoryById = async (req, res, next) => {
-    try {
-        const id = req.params.id;
-
-        const data = await PatientModel.deletePatientHistoryById(id);
-
-        res.status(200).json({
-            success: true,
-            message: 'Payment history deleted successfully',
-            data: data
-        });
-    } catch (error) {
-        next(error);
-    }
-};
-
-const getPaymentHistoryByPatientId = async (req, res, next) => {
-    try {
-        const page = Number(req.query.page) || 1;
-        const limit = Number(req.query.limit) || 10;
-        const search = req.query.search
-            ? decodeURIComponent(req.query.search)
-            : "";
-        const patientId = req.query.patientId || "";
-
-        const {
-            items,
-            total,
-            currentPage,
-            lastPage
-        } = await PatientModel.getPaymentHistoryByPatientId(page, limit, search, patientId);
-
-        return res.status(200).json({
-            success: true,
-            message: "Payment history retrieved successfully",
-            data: {
-                items,
-                total,
-                currentPage,
-                lastPage,
-            }
-        });
-
     } catch (error) {
         next(error);
     }
@@ -258,7 +202,4 @@ export default {
     getPatientById,
     updatePatientById,
     deletePatientById,
-    addPatientPayment,
-    getPaymentHistoryByPatientId,
-    deletePaymentHistoryById,
 };

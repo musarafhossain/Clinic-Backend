@@ -4,6 +4,7 @@ import DiseaseRoutes from './DiseaseRoutes.js';
 import PatientRoutes from './PatientRoutes.js';
 import AttendanceRoutes from './AttendanceRoutes.js';
 import StatRoutes from './StatRoutes.js';
+import PaymentHistoryRoutes from './PaymentHistoryRoutes.js';
 
 export {
     UserRoutes,
@@ -12,4 +13,5 @@ export {
     PatientRoutes,
     AttendanceRoutes,
     StatRoutes,
+    PaymentHistoryRoutes,
 };

@@ -1,6 +1,6 @@
 import AttendanceModel from '../models/AttendanceModel.js';
 
-const markSingleAttendance = async (req, res, next) => {
+const markAttendance = async (req, res, next) => {
     try {
         const { patient_id, disease_name, disease_amount, date, is_present } = req.body;
         const added_by = req.user?.id ?? null;
@@ -34,7 +34,7 @@ const markSingleAttendance = async (req, res, next) => {
     }
 };
 
-const getPatientsWithAttendance = async (req, res, next) => {
+const getAllAttendance = async (req, res, next) => {
     try {
         const page = Number(req.query.page) || 1;
         const limit = Number(req.query.limit) || 10;
@@ -47,11 +47,11 @@ const getPatientsWithAttendance = async (req, res, next) => {
             total,
             currentPage,
             lastPage
-        } = await AttendanceModel.getAllPatientsWithAttendance(page, limit, search, status, date);
+        } = await AttendanceModel.getAllAttendance(page, limit, search, status, date);
 
         return res.status(200).json({
             success: true,
-            message: "Patients with attendance retrieved successfully",
+            message: "Attendance retrieved successfully",
             data: {
                 items,
                 total,
@@ -65,25 +65,25 @@ const getPatientsWithAttendance = async (req, res, next) => {
     }
 };
 
-const getAttendanceHistoryByPatientId = async (req, res, next) => {
+const getAttendanceByPatientId = async (req, res, next) => {
     try {
         const page = Number(req.query.page) || 1;
         const limit = Number(req.query.limit) || 10;
         const search = req.query.search
             ? decodeURIComponent(req.query.search)
             : "";
-        const patientId = req.query.patientId || "";
+        const patientId = req.params.patientId || "";
 
         const {
             items,
             total,
             currentPage,
             lastPage
-        } = await AttendanceModel.getAttendanceHistoryByPatientId(page, limit, search, patientId);
+        } = await AttendanceModel.getAttendanceByPatientId(page, limit, search, patientId);
 
         return res.status(200).json({
             success: true,
-            message: "Patient attendance history retrieved successfully",
+            message: "Patient attendances retrieved successfully",
             data: {
                 items,
                 total,
@@ -98,7 +98,7 @@ const getAttendanceHistoryByPatientId = async (req, res, next) => {
 };
 
 export default {
-    markSingleAttendance,
-    getPatientsWithAttendance,
-    getAttendanceHistoryByPatientId
+    markAttendance,
+    getAllAttendance,
+    getAttendanceByPatientId
 };

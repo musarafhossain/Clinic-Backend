@@ -143,12 +143,18 @@ const getAllAttendance = async (
     const offset = (page - 1) * limit;
     const searchPattern = `%${search}%`;
 
-    const params = [searchPattern, searchPattern];
+    const params = [];
     let whereClause = `(p.name LIKE ? OR p.phone LIKE ?)`;
+    params.push(searchPattern, searchPattern);
 
     if (status) {
         whereClause += ` AND p.status = ?`;
         params.push(status);
+    }
+
+    // Add date param for today_payment
+    if (date) {
+        params.push(date);
     }
 
     params.push(limit, offset);
@@ -159,6 +165,14 @@ const getAllAttendance = async (
             p.id,
             p.name,
             p.guardian_name,
+
+            (
+                SELECT COALESCE(SUM(ph.amount), 0)
+                FROM payment_history ph
+                WHERE ph.patient_id = p.id
+                ${date ? `AND DATE(ph.created_at) = DATE(?)` : ``}
+            ) AS today_payment,
+
             IF(
                 d.id IS NULL,
                 NULL,
@@ -177,6 +191,7 @@ const getAllAttendance = async (
         params
     );
 
+    // ------------------ Attendance ------------------
     let attendanceMap = {};
     if (date) {
         const [attRows] = await db.execute(
@@ -188,7 +203,7 @@ const getAllAttendance = async (
                 datetime
             FROM attendances
             WHERE DATE(datetime) = DATE(?)
-        `,
+            `,
             [date]
         );
 
@@ -213,6 +228,7 @@ const getAllAttendance = async (
         }
     }));
 
+    // ------------------ Count ------------------
     const countParams = [searchPattern, searchPattern];
     let countWhere = `(name LIKE ? OR phone LIKE ?)`;
 

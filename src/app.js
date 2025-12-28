@@ -2,7 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import verifyJwtToken from './middlewares/verifyJwtToken.js';
 import passport from 'passport';
-import { UserRoutes, AuthRoutes, DiseaseRoutes, PatientRoutes, AttendanceRoutes, StatRoutes, PaymentHistoryRoutes } from './routes/index.js';
+import { UserRoutes, AuthRoutes, DiseaseRoutes, PatientRoutes, AttendanceRoutes, StatRoutes, PaymentHistoryRoutes, NotificationRoutes } from './routes/index.js';
 import { getCurrentDateTime } from './utils/time.js';
 import './config/passport-jwt-strategy.js';
 
@@ -27,6 +27,7 @@ app.use('/api/patients', verifyJwtToken, passport.authenticate('jwt', { session:
 app.use('/api/payment-history', verifyJwtToken, passport.authenticate('jwt', { session: false }), PaymentHistoryRoutes);
 app.use('/api/attendances', verifyJwtToken, passport.authenticate('jwt', { session: false }), AttendanceRoutes);
 app.use('/api/stats', verifyJwtToken, passport.authenticate('jwt', { session: false }), StatRoutes);
+app.use('/api/notifications', verifyJwtToken, passport.authenticate('jwt', { session: false }), NotificationRoutes);
 app.all('/', (req, res) => {
   res.json({ 
     message: 'Server is running!',

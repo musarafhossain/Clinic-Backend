@@ -1,4 +1,5 @@
 import db from '../config/db.js';
+import NotificationModel from './NotificationModel.js';
 import { getCurrentDateTime, dateWithCurrentTime } from '../utils/time.js';
 
 const toggleAttendance = async ({
@@ -10,6 +11,8 @@ const toggleAttendance = async ({
     is_present
 }) => {
     const conn = await db.getConnection();
+    let resultData;
+
     try {
         await conn.beginTransaction();
 
@@ -39,9 +42,7 @@ const toggleAttendance = async ({
             // Update total_bill (difference)
             const diff = newAmount - oldAmount;
 
-            await conn.commit();
-
-            return {
+            resultData = {
                 action: existing.length ? "updated" : "added",
                 id: result.insertId,
                 patient_id,
@@ -65,15 +66,62 @@ const toggleAttendance = async ({
                 [patient_id, date]
             );
 
-            await conn.commit();
-
-            return {
+            resultData = {
                 action: "deleted",
                 affectedRows: result.affectedRows,
                 patient_id,
                 bill_change: -oldAmount
             };
         }
+
+        // ------------------ Notification Logic ------------------
+        const [[{ total_count }]] = await conn.execute(
+            `SELECT COUNT(*) as total_count FROM attendances WHERE patient_id = ?`,
+            [patient_id]
+        );
+
+        if (total_count > 0 && total_count % 15 === 0) {
+            const [[patient]] = await conn.execute(
+                `SELECT name FROM patients WHERE id = ?`,
+                [patient_id]
+            );
+
+            const [[{ total_bill }]] = await conn.execute(
+                `SELECT SUM(disease_amount) as total_bill FROM attendances WHERE patient_id = ?`,
+                [patient_id]
+            );
+
+            const patientName = patient ? patient.name : '';
+            const totalBill = total_bill || 0;
+            const message = `Patient ${patientName} has completed ${total_count} days of attendance.`;
+
+            // Check if notification exists
+            const row = await NotificationModel.getNotificationByPatientId(conn, patient_id);
+
+            if (row.length > 0) {
+                await NotificationModel.updateNotification(conn, {
+                    patient_id,
+                    patient_name: patientName,
+                    total_attendance_count: total_count,
+                    total_bill: totalBill,
+                    message,
+                    created_at: getCurrentDateTime()
+                });
+            } else {
+                await NotificationModel.createNotification(conn, {
+                    patient_id,
+                    patient_name: patientName,
+                    total_attendance_count: total_count,
+                    total_bill: totalBill,
+                    message,
+                    created_at: getCurrentDateTime()
+                });
+            }
+        }
+
+        await conn.commit();
+        return resultData;
+
     } catch (err) {
         await conn.rollback();
         throw err;

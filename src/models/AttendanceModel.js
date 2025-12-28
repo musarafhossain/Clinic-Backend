@@ -144,17 +144,18 @@ const getAllAttendance = async (
     const searchPattern = `%${search}%`;
 
     const params = [];
+
+    // Add date param for today_payment
+    if (date) {
+        params.push(date);
+    }
+
     let whereClause = `(p.name LIKE ? OR p.phone LIKE ?)`;
     params.push(searchPattern, searchPattern);
 
     if (status) {
         whereClause += ` AND p.status = ?`;
         params.push(status);
-    }
-
-    // Add date param for today_payment
-    if (date) {
-        params.push(date);
     }
 
     params.push(limit, offset);

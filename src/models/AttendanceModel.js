@@ -82,6 +82,10 @@ const toggleAttendance = async ({
 
         resultData.total_attendance_count = total_count;
 
+        // Check if notification exists
+        const row = await NotificationModel.getNotificationByPatientId(conn, patient_id);
+        const existingNotif = row.length > 0 ? row[0] : null;
+
         if (total_count > 0 && total_count % 15 === 0) {
             const [[patient]] = await conn.execute(
                 `SELECT name FROM patients WHERE id = ?`,
@@ -97,10 +101,7 @@ const toggleAttendance = async ({
             const totalBill = total_bill || 0;
             const message = `Patient ${patientName} has completed ${total_count} days of attendance.`;
 
-            // Check if notification exists
-            const row = await NotificationModel.getNotificationByPatientId(conn, patient_id);
-
-            if (row.length > 0) {
+            if (existingNotif) {
                 await NotificationModel.updateNotification(conn, {
                     patient_id,
                     patient_name: patientName,
@@ -119,6 +120,8 @@ const toggleAttendance = async ({
                     created_at: getCurrentDateTime()
                 });
             }
+        } else if (existingNotif && total_count < existingNotif.total_attendance_count) {
+            await NotificationModel.deleteNotificationByPatientId(conn, patient_id);
         }
 
         await conn.commit();

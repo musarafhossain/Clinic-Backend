@@ -39,6 +39,14 @@ const updateNotification = async (conn, data) => {
     return result;
 };
 
+const deleteNotificationByPatientId = async (conn, patient_id) => {
+    const [result] = await conn.execute(
+        `DELETE FROM notifications WHERE patient_id = ?`,
+        [patient_id]
+    );
+    return result;
+};
+
 const getAllNotifications = async (page = 1, limit = 10, search = "", read = "") => {
     const offset = (page - 1) * limit;
     const searchPattern = `%${search}%`;
@@ -135,4 +143,5 @@ export default {
     getAllNotifications,
     markAsRead,
     markAllAsRead,
+    deleteNotificationByPatientId,
 };

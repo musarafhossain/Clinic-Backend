@@ -80,6 +80,8 @@ const toggleAttendance = async ({
             [patient_id]
         );
 
+        resultData.total_attendance_count = total_count;
+
         if (total_count > 0 && total_count % 15 === 0) {
             const [[patient]] = await conn.execute(
                 `SELECT name FROM patients WHERE id = ?`,

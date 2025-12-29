@@ -6,7 +6,7 @@ const createNotification = async (conn, data) => {
     const [result] = await conn.execute(
         `INSERT INTO notifications 
             (patient_id, patient_name, total_attendance_count, total_bill, message, is_read, created_at)
-            VALUES (?, ?, ?, ?, ?, ?, 0, ?)`,
+            VALUES (?, ?, ?, ?, ?, 0, ?)`,
         [patient_id, patient_name, total_attendance_count, total_bill, message, created_at]
     );
     return result;

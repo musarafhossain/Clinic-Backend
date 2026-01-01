@@ -161,7 +161,7 @@ const verifyOtp = async (req, res, next) => {
         if (!user) {
             return res.status(401).json({
                 success: false,
-                message: 'Invalid email or OTP'
+                message: 'Invalid email'
             });
         }
 
@@ -172,7 +172,20 @@ const verifyOtp = async (req, res, next) => {
         if (!otpData) {
             return res.status(401).json({
                 success: false,
-                message: 'Invalid email or OTP'
+                message: 'Invalid OTP'
+            });
+        }
+
+        // Check if otp is expired
+        const otpTime = new Date(otpData.created_at);
+        const currentTime = new Date(getCurrentDateTime());
+        const timeDiff = (currentTime - otpTime) / 1000 / 60;
+
+        if (timeDiff > 15) {
+            await OtpModel.deleteOtpByUserId(user.id);
+            return res.status(401).json({
+                success: false,
+                message: 'OTP is expired'
             });
         }
 
@@ -181,7 +194,7 @@ const verifyOtp = async (req, res, next) => {
         if (!isOtpValid) {
             return res.status(401).json({
                 success: false,
-                message: 'Invalid email or OTP'
+                message: 'Invalid OTP'
             });
         }
 
@@ -242,6 +255,19 @@ const resetPassword = async (req, res, next) => {
             return res.status(401).json({
                 success: false,
                 message: 'Invalid email or OTP'
+            });
+        }
+
+        // Check if otp is expired
+        const otpTime = new Date(otpData.created_at);
+        const currentTime = new Date(getCurrentDateTime());
+        const timeDiff = (currentTime - otpTime) / 1000 / 60;
+
+        if (timeDiff > 15) {
+            await OtpModel.deleteOtpByUserId(user.id);
+            return res.status(401).json({
+                success: false,
+                message: 'OTP is expired'
             });
         }
 

@@ -49,7 +49,7 @@ export const otpTemplate = (otp, name) => {
                             letter-spacing: 0.56px;
                             ">
                             This OTP is for your password reset. The OTP is valid for
-                            <span style="font-weight: 600; color: #1f1f1f">5 minutes</span>.
+                            <span style="font-weight: 600; color: #1f1f1f">15 minutes</span>.
                             Do not share this code. Your OTP is:
                         </p>
                         <p style="

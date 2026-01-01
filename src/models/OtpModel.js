@@ -33,7 +33,7 @@ const createOtp = async (otpData) => {
 const getOtpByUserId = async (userId) => {
     // Get otp by user id
     const [rows] = await db.execute(
-        `SELECT otp FROM otp WHERE user_id = ? LIMIT 1`,
+        `SELECT * FROM otp WHERE user_id = ? LIMIT 1`,
         [userId]
     );
 

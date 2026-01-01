@@ -143,6 +143,65 @@ const verifyOtp = async (req, res, next) => {
     // Get email and otp from request body
     const email = req.body?.email ?? null;
     const otp = req.body?.otp ?? null;
+
+    // Check if email and otp are provided
+    if (!email || !otp) {
+        return res.status(400).json({
+            success: false,
+            message: 'Email and OTP are required'
+        });
+    }
+
+    try {
+        // Get user by email
+        const user = await UserModel.getUserByEmail(email);
+
+        // Check if user exists
+        if (!user) {
+            return res.status(401).json({
+                success: false,
+                message: 'Invalid email or OTP'
+            });
+        }
+
+        // Get otp by user id
+        const otp = await OtpModel.getOtpByUserId(user.id);
+
+        // Check if otp exists
+        if (!otp) {
+            return res.status(401).json({
+                success: false,
+                message: 'Invalid email or OTP'
+            });
+        }
+
+        // Check if otp is valid
+        const isOtpValid = await bcrypt.compare(otp, otp.otp);
+        if (!isOtpValid) {
+            return res.status(401).json({
+                success: false,
+                message: 'Invalid email or OTP'
+            });
+        }
+
+        // Send response
+        res.status(200).json({
+            success: true,
+            message: 'OTP verified successfully',
+            data: {
+                email,
+            }
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+// reset password controller
+const resetPassword = async (req, res, next) => {
+    // Get email and otp from request body
+    const email = req.body?.email ?? null;
+    const otp = req.body?.otp ?? null;
     const newPassword = req.body?.password ?? null;
     const newConfirmPassword = req.body?.confirmPassword ?? null;
 
@@ -262,5 +321,6 @@ export default {
     login,
     sendOtp,
     verifyOtp,
+    resetPassword,
     me,
 }

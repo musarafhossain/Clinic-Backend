@@ -21,7 +21,7 @@ export const otpTemplate = (otp, name) => {
             <main>
                 <div style="
                             margin: 0;
-                            padding: 30px 40px;
+                            padding: 20px 30px;
                             background: #ffffff;
                             border-radius: 30px;
                         ">
@@ -55,7 +55,7 @@ export const otpTemplate = (otp, name) => {
                         <p style="
                                 margin: 0;
                                 margin-top: 60px;
-                                font-size: 30px;
+                                font-size: 25px;
                                 font-weight: 600;
                                 letter-spacing: 25px;
                                 color: #ba3d4f;

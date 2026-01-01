@@ -279,7 +279,7 @@ const resetPassword = async (req, res, next) => {
         // Send response
         res.status(200).json({
             success: true,
-            message: 'OTP verified successfully',
+            message: 'Password reset successfully',
             data: {
                 token: jwtToken,
                 user,

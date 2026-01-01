@@ -166,10 +166,10 @@ const verifyOtp = async (req, res, next) => {
         }
 
         // Get otp by user id
-        const otp = await OtpModel.getOtpByUserId(user.id);
+        const otpData = await OtpModel.getOtpByUserId(user.id);
 
         // Check if otp exists
-        if (!otp) {
+        if (!otpData) {
             return res.status(401).json({
                 success: false,
                 message: 'Invalid email or OTP'
@@ -177,7 +177,7 @@ const verifyOtp = async (req, res, next) => {
         }
 
         // Check if otp is valid
-        const isOtpValid = await bcrypt.compare(otp, otp.otp);
+        const isOtpValid = await bcrypt.compare(otp, otpData.otp);
         if (!isOtpValid) {
             return res.status(401).json({
                 success: false,

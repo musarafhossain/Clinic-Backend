@@ -94,11 +94,12 @@ const sendOtp = async (req, res, next) => {
 
         // Generate OTP
         const otp = generateOTP();
+        const hashedOtp = await bcrypt.hash(otp, 10);
 
         // Create OTP
         const createdOtp = await OtpModel.createOtp({
             user_id: user.id,
-            otp,
+            otp: hashedOtp,
             created_at: getCurrentDateTime(),
         });
 
@@ -112,7 +113,7 @@ const sendOtp = async (req, res, next) => {
 
         // Set subject and message
         const subject = "Password Reset OTP";
-        const message = otpTemplate(createdOtp.otp, user.name ?? "User");
+        const message = otpTemplate(otp, user.name ?? "User");
 
         // Send OTP
         const response = await sendEmail(email, subject, message);

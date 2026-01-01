@@ -121,7 +121,7 @@ const sendOtp = async (req, res, next) => {
         if (!response.success) {
             return res.status(401).json({
                 success: false,
-                message: 'Failed to send OTP'
+                message: 'Failed to send OTP',
             });
         }
 
@@ -129,6 +129,9 @@ const sendOtp = async (req, res, next) => {
         res.status(200).json({
             success: response.success,
             message: "OTP sent successfully",
+            data: {
+                email,
+            }
         });
     } catch (error) {
         next(error);

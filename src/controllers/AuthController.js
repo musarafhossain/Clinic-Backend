@@ -89,6 +89,9 @@ const sendOtp = async (req, res, next) => {
             });
         }
 
+        // Delete existing otp
+        await OtpModel.deleteOtpByUserId(user.id);
+
         // Generate OTP
         const otp = generateOTP();
 

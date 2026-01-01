@@ -18,12 +18,13 @@ const sendEmail = async (to, subject, message) => {
 
     try {
         // send mail
-        await transporter.sendMail(mailOptions);
+        const info = await transporter.sendMail(mailOptions);
 
         // return response
         const response = {
             success: true,
             message: "Email sent successfully",
+            info,
         };
         return response;
     } catch (error) {

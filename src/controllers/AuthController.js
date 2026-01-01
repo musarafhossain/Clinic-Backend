@@ -65,9 +65,9 @@ const login = async (req, res, next) => {
 };
 
 // send otp controller
-const sendOtp = async (req, res) => {
+const sendOtp = async (req, res, next) => {
     // Get email from request body
-    const email = req.body.email ?? null;
+    const email = req.body?.email ?? null;
 
     // Check if email is provided
     if (!email) {

@@ -138,6 +138,98 @@ const sendOtp = async (req, res, next) => {
     }
 };
 
+// verify otp controller
+const verifyOtp = async (req, res, next) => {
+    // Get email and otp from request body
+    const email = req.body?.email ?? null;
+    const otp = req.body?.otp ?? null;
+    const newPassword = req.body?.password ?? null;
+    const newConfirmPassword = req.body?.confirmPassword ?? null;
+
+    // Check if email and otp are provided
+    if (!email || !otp || !newPassword || !newConfirmPassword) {
+        return res.status(400).json({
+            success: false,
+            message: 'Email, OTP, Password and Confirm Password are required'
+        });
+    }
+
+    // Check if new password and confirm password are same
+    if (newPassword !== newConfirmPassword) {
+        return res.status(401).json({
+            success: false,
+            message: 'New password and confirm password do not match'
+        });
+    }
+
+    try {
+        // Get user by email
+        const user = await UserModel.getUserByEmail(email);
+
+        // Check if user exists
+        if (!user) {
+            return res.status(401).json({
+                success: false,
+                message: 'Invalid email or OTP'
+            });
+        }
+
+        // Get otp by user id
+        const otp = await OtpModel.getOtpByUserId(user.id);
+
+        // Check if otp exists
+        if (!otp) {
+            return res.status(401).json({
+                success: false,
+                message: 'Invalid email or OTP'
+            });
+        }
+
+        // Check if otp is valid
+        const isOtpValid = await bcrypt.compare(otp, otp.otp);
+        if (!isOtpValid) {
+            return res.status(401).json({
+                success: false,
+                message: 'Invalid email or OTP'
+            });
+        }
+
+        // Delete existing otp
+        await OtpModel.deleteOtpByUserId(user.id);
+
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+        // Update user password
+        const updatedUser = await UserModel.updateUser(user.id, {
+            name: user.name,
+            email: user.email,
+            phone: user.phone,
+            password: hashedPassword,
+            updated_at: getCurrentDateTime(),
+        });
+
+        // Generate JWT token
+        const { jwtToken } = await generateJwtToken(user);
+
+        // Remove password from user object
+        if (user && user.password) {
+            delete user.password;
+        }
+
+        // Send response
+        res.status(200).json({
+            success: true,
+            message: 'OTP verified successfully',
+            data: {
+                token: jwtToken,
+                user,
+            }
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
 // Me controller
 const me = async (req, res) => {
     try {
@@ -169,5 +261,6 @@ const me = async (req, res) => {
 export default {
     login,
     sendOtp,
+    verifyOtp,
     me,
 }

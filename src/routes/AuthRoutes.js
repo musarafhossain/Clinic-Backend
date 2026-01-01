@@ -11,6 +11,9 @@ router.post('/login', AuthController.login);
 // Send OTP route
 router.post('/send-otp', AuthController.sendOtp);
 
+// Verify OTP route
+router.post('/verify-otp', AuthController.verifyOtp);
+
 // Me route
 router.get('/me', verifyJwtToken, passport.authenticate('jwt', { session: false }), AuthController.me);
 

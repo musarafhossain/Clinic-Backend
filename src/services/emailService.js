@@ -1,4 +1,4 @@
-import transporter from "../config/emailConfig";
+import transporter from "../config/emailConfig.js";
 
 // Send email
 /*
@@ -36,4 +36,6 @@ const sendEmail = async (to, subject, message) => {
     }
 };
 
-export default { sendEmail };
+export { 
+    sendEmail, 
+};

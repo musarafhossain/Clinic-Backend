@@ -55,7 +55,7 @@ export const otpTemplate = (otp, name) => {
                         <p style="
                                 margin: 0;
                                 margin-top: 60px;
-                                font-size: 40px;
+                                font-size: 30px;
                                 font-weight: 600;
                                 letter-spacing: 25px;
                                 color: #ba3d4f;

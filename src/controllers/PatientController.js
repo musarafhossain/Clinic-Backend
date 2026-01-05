@@ -7,8 +7,7 @@ const createPatient = async (req, res, next) => {
         // Prepare patient data
         const patientData = {
             name: req.body.name ?? null,
-            guardian_name: req.body.guardian_name ?? null,
-            dob: req.body.dob ?? null,
+            age: req.body.age ?? null,
             gender: req.body.gender ?? null,
             status: req.body.status ?? "ONGOING",
             disease: req.body.disease?.id ?? null,
@@ -131,8 +130,7 @@ const updatePatientById = async (req, res, next) => {
         // Prepare patient data
         let patientData = {
             name: req.body.name ?? currPatient.name ?? null,
-            guardian_name: req.body.guardian_name ?? currPatient.guardian_name ?? null,
-            dob: req.body.dob ?? currPatient.dob ?? null,
+            age: req.body.age ?? currPatient.age ?? null,
             gender: req.body.gender ?? currPatient.gender ?? null,
             status: req.body.status ?? currPatient.status ?? "ONGOING",
             disease: req.body.disease?.id ?? currPatient.disease ?? null,

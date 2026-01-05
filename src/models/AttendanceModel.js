@@ -218,7 +218,7 @@ const getAllAttendance = async (
         SELECT 
             p.id,
             p.name,
-            p.guardian_name,
+            p.age,
 
             (
                 SELECT COALESCE(SUM(ph.amount), 0)

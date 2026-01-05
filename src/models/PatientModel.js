@@ -4,8 +4,7 @@ import db from '../config/db.js';
 /*
     @param {Object} patientData
     @param {string} patientData.name
-    @param {string} patientData.guardian_name
-    @param {string} patientData.dob
+    @param {string} patientData.age
     @param {string} patientData.gender
     @param {string} patientData.status
     @param {string} patientData.disease
@@ -19,14 +18,14 @@ import db from '../config/db.js';
 */
 const createPatient = async (patientData) => {
     // Destructure the patient data
-    const { name, guardian_name, dob, gender, status, disease, phone, address, created_at, created_by, updated_at, updated_by, } = patientData;
+    const { name, age, gender, status, disease, phone, address, created_at, created_by, updated_at, updated_by, } = patientData;
 
     // Insert the patient into the database
     const [result] = await db.execute(
         `INSERT INTO patients 
-        (name, guardian_name, dob, gender, status, disease, phone, address, created_at, created_by, updated_at, updated_by) 
+        (name, age, gender, status, disease, phone, address, created_at, created_by, updated_at, updated_by) 
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [name, guardian_name, dob, gender, status, disease, phone, address, created_at, created_by, updated_at, updated_by]
+        [name, age, gender, status, disease, phone, address, created_at, created_by, updated_at, updated_by]
     );
 
     // Get the created patient
@@ -73,8 +72,7 @@ const getAllPatients = async (page = 1, limit = 10, search = "", status = "") =>
         SELECT 
             p.id,
             p.name,
-            p.guardian_name,
-            p.dob,
+            p.age,
             p.gender,
             p.status,
             p.phone,
@@ -170,8 +168,7 @@ const getPatientById = async (patientId) => {
         SELECT
             p.id,
             p.name,
-            p.guardian_name,
-            p.dob,
+            p.age,
             p.gender,
             p.status,
             p.phone,
@@ -243,7 +240,7 @@ const getPatientById = async (patientId) => {
     @param {Object} patientData
     @param {string} patientData.name
     @param {string} patientData.father_name
-    @param {string} patientData.dob
+    @param {string} patientData.age
     @param {string} patientData.gender
     @param {string} patientData.status
     @param {number} patientData.disease
@@ -255,7 +252,7 @@ const getPatientById = async (patientId) => {
 */
 const updatePatientById = async (patientId, patientData) => {
     // Destructure the patient data
-    const { name, guardian_name, dob, gender, status, disease, phone, address, updated_by, updated_at } = patientData;
+    const { name, age, gender, status, disease, phone, address, updated_by, updated_at } = patientData;
 
     // Update the patient
     await db.execute(
@@ -263,8 +260,7 @@ const updatePatientById = async (patientId, patientData) => {
         UPDATE patients 
         SET 
             name = ?,
-            guardian_name = ?,
-            dob = ?,
+            age = ?,
             gender = ?,
             status = ?,
             disease = ?,
@@ -274,7 +270,7 @@ const updatePatientById = async (patientId, patientData) => {
             updated_at = ?
         WHERE id = ?
         `,
-        [name, guardian_name, dob, gender, status, disease, phone, address, updated_by, updated_at, patientId]
+        [name, age, gender, status, disease, phone, address, updated_by, updated_at, patientId]
     );
 
     // Get the updated patient

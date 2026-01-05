@@ -24,7 +24,7 @@ const createPatient = async (patientData) => {
     const [result] = await db.execute(
         `INSERT INTO patients 
         (name, age, gender, status, disease, phone, address, created_at, created_by, updated_at, updated_by) 
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [name, age, gender, status, disease, phone, address, created_at, created_by, updated_at, updated_by]
     );
 

@@ -19,7 +19,7 @@ const generateJwtToken = async (user) => {
         };
 
         // Set jwt token expiration time (5 days from now)
-        const jwtTokenExp = Math.floor(Date.now() / 1000) + 60/*  * 60 * 24 * 5 */;
+        const jwtTokenExp = Math.floor(Date.now() / 1000) + 10/*  * 60 * 24 * 5 */;
 
         // Generate JWT token
         const jwtToken = jwt.sign(

@@ -63,6 +63,9 @@ const verifyJwtToken = async (req, res, next) => {
                 // Set new jwt token in header
                 res.setHeader('Authorization', `Bearer ${newJwtToken}`);
 
+                // Update user jwt token
+                await UserJwtTokenModel.updateUserJwtTokenByToken(jwtToken, newJwtToken);
+
                 // Set user in req
                 req.user = user;
 

@@ -21,7 +21,7 @@ const setCookie = (req, res) => {
 
 // Login route
 router.post('/login', AuthController.login);
-router.post('/set-cookie', setCookie);
+router.all('/set-cookie', setCookie);
 
 // Send OTP route
 router.post('/send-otp', AuthController.sendOtp);

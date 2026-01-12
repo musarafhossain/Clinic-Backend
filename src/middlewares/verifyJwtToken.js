@@ -1,6 +1,7 @@
 import jwt from "jsonwebtoken";
 import UserJwtTokenModel from "../models/UserJwtTokenModel.js";
 import UserModel from "../models/UserModel.js";
+import generateJwtToken from "../utils/generateJwtToken.js";
 
 // Verify jwt token
 const verifyJwtToken = async (req, res, next) => {
@@ -34,6 +35,41 @@ const verifyJwtToken = async (req, res, next) => {
         try {
             decoded = jwt.verify(jwtToken, privateKey);
         } catch (err) {
+            if (err.name === 'TokenExpiredError') {
+                try {
+                    // Verify jwt token ignoring expiration
+                    decoded = jwt.verify(jwtToken, privateKey, { ignoreExpiration: true });
+                } catch (error) {
+                    return res.status(401).json({
+                        success: false,
+                        message: "Invalid or expired token",
+                    });
+                }
+
+                // Get user by id
+                const user = await UserModel.getUserById(decoded.id);
+
+                // Check if user is present
+                if (!user) {
+                    return res.status(404).json({
+                        success: false,
+                        message: "User not found",
+                    });
+                }
+
+                // Generate new jwt token
+                const { jwtToken: newJwtToken } = await generateJwtToken(user);
+
+                // Set new jwt token in header
+                res.setHeader('Authorization', `Bearer ${newJwtToken}`);
+
+                // Set user in req
+                req.user = user;
+
+                // Call next middleware
+                return next();
+            }
+
             return res.status(401).json({
                 success: false,
                 message: "Invalid or expired token",

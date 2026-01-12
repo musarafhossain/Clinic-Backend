@@ -50,6 +50,15 @@ const login = async (req, res, next) => {
             delete user.password;
         }
 
+        // Set secure cookie
+        res.cookie("access_token", jwtToken, {
+            httpOnly: true,
+            secure: true,
+            sameSite: "None",
+            domain: ".musaraf.org.in",
+            maxAge: expiresIn * 1000, // seconds → ms
+        });
+
         // Send response
         res.status(200).json({
             success: true,

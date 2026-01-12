@@ -56,7 +56,7 @@ const login = async (req, res, next) => {
             secure: true,
             sameSite: "None",
             domain: ".musaraf.org.in",
-            maxAge: expiresIn * 1000, // seconds → ms
+            maxAge:  60 * 60 * 24 * 5 * 1000, // seconds → ms
         });
 
         // Send response

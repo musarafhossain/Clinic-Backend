@@ -63,6 +63,13 @@ const verifyJwtToken = async (req, res, next) => {
                 // Set new jwt token in header
                 res.setHeader('Authorization', `Bearer ${newJwtToken}`);
 
+                res.cookie('jwtToken', newJwtToken, {
+                    httpOnly: true,
+                    secure: true,
+                    sameSite: 'strict',
+                    maxAge: 60 * 60 * 24 * 5 * 1000,
+                });
+
                 // Update user jwt token
                 await UserJwtTokenModel.updateUserJwtTokenByToken(jwtToken, newJwtToken);
 

@@ -11,6 +11,7 @@ const app = express();
 const corsOptions = {
   origin: [
     'https://musaraf.org.in',
+    'https://physio.org.in',
     'http://10.59.109.106:3000',
     'http://localhost:3000'
   ],
